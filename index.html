@@ -1,0 +1,2713 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'">
+<title>Instructor Overview – Dashboard</title>
+<style>
+  :root{
+    /* Blue → dark-blue brand palette */
+    --bl:#2160ae;          /* primary blue */
+    --bl-dark:#173f77;     /* dark blue */
+    --bl-deep:#0f2c56;     /* deepest blue */
+    --bl-accent:#3d7fd4;   /* lighter accent */
+    --bl-soft:#e8f0fa;     /* soft blue tint */
+    --ink:#1c2534; --ink-2:#4a5568; --ink-3:#7b8794;
+    --paper:#f4f7fb; --card:#ffffff; --line:#d9e2ee;
+    /* Status palette — fixed, always paired with icon + label */
+    --st-ok:#0ca30c;      --st-ok-text:#086108;      --st-ok-bg:#e7f6e7;
+    --st-warn:#fab219;    --st-warn-text:#7a5200;    --st-warn-bg:#fdf3d9;
+    --st-serious:#ec835a; --st-serious-text:#993a17; --st-serious-bg:#fdeae2;
+    --st-crit:#d03b3b;    --st-crit-text:#8f1f1f;    --st-crit-bg:#fbe3e3;
+    --st-none:#7b8794;    --st-none-text:#4a5568;    --st-none-bg:#eef1f5;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       background:var(--paper);color:var(--ink);font-size:14.5px;line-height:1.45}
+  input,select,textarea,button{font-family:inherit;font-size:inherit}
+  button{cursor:pointer}
+
+  header{background:linear-gradient(110deg,var(--bl),var(--bl-dark) 60%,var(--bl-deep));color:#fff;
+         padding:16px 22px 14px;display:flex;flex-wrap:wrap;gap:14px;align-items:center}
+  .logo{width:46px;height:46px;border-radius:11px;background:#fff;color:var(--bl-dark);display:flex;
+        align-items:center;justify-content:center;font-weight:800;font-size:19px;flex:0 0 auto;letter-spacing:.5px}
+  header .titles{flex:1 1 260px;min-width:220px}
+  header h1{font-size:19px;font-weight:800;letter-spacing:.2px}
+  header .sub{font-size:12.5px;opacity:.85;margin-top:2px}
+  .hdr-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .badge{font-size:12px;padding:4px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.45);
+         background:rgba(255,255,255,.12);display:inline-flex;align-items:center;gap:6px}
+  .lang-btn{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.45);color:#fff;
+            border-radius:8px;padding:5px 11px;font-weight:700;font-size:12.5px}
+  .lang-btn:hover{background:rgba(255,255,255,.26)}
+  .lang-group{display:inline-flex;border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,.45)}
+  .lang-group .lang-btn{border:none;border-radius:0}
+  .lang-group .lang-btn[aria-pressed="true"]{background:#fff;color:var(--bl-dark)}
+
+  .toolbar{display:flex;flex-wrap:wrap;gap:8px;padding:12px 22px;background:var(--card);
+           border-bottom:1px solid var(--line);align-items:center}
+  .btn{padding:8px 14px;border:1px solid var(--bl);background:var(--bl);color:#fff;border-radius:9px;
+       font-weight:700;font-size:13px;display:inline-flex;align-items:center;gap:7px;transition:background .12s}
+  .btn:hover{background:var(--bl-dark);border-color:var(--bl-dark)}
+  .btn.ghost{background:#fff;color:var(--bl);border-color:var(--bl)}
+  .btn.ghost:hover{background:var(--bl-soft)}
+  .btn.danger{background:#fff;color:var(--st-crit-text);border-color:var(--st-crit)}
+  .btn.danger:hover{background:var(--st-crit-bg)}
+  .btn:focus-visible,.lang-btn:focus-visible,input:focus-visible,select:focus-visible{
+       outline:3px solid var(--bl-accent);outline-offset:1px}
+  .toolbar .spacer{flex:1 1 auto}
+
+  /* ---- sheet tabs ---- */
+  .sheet-tabs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px;border-bottom:2px solid var(--line);padding-bottom:0}
+  .sheet-tab{border:1px solid var(--line);border-bottom:none;background:#eef3f9;color:var(--ink-2);
+             padding:8px 14px;border-radius:9px 9px 0 0;font-weight:700;font-size:13px;position:relative;top:2px}
+  .sheet-tab:hover{background:var(--bl-soft);color:var(--bl-dark)}
+  .sheet-tab.active{background:var(--bl-dark);border-color:var(--bl-dark);color:#fff}
+  .sheet-tab .n{font-weight:400;opacity:.8;font-size:11.5px;margin-left:5px}
+
+  main{padding:18px 22px 40px;max-width:1500px;margin:0 auto}
+
+  /* ---- upload page / drop zone ---- */
+  .upload-page{max-width:860px;margin:10px auto 0}
+  .upload-page .up-back{margin-bottom:14px}
+  .dropzone{border:3px dashed var(--bl-accent);border-radius:20px;background:var(--card);
+            padding:84px 34px;text-align:center;transition:background .15s,border-color .15s;cursor:pointer}
+  .dropzone.drag{background:var(--bl-soft);border-color:var(--bl-dark)}
+  .dropzone .dz-icon{font-size:64px;margin-bottom:14px}
+  .dropzone h2{font-size:26px;color:var(--bl-dark);margin-bottom:12px}
+  .dropzone p{color:var(--ink-2);margin-bottom:8px;font-size:15px;max-width:620px;margin-left:auto;margin-right:auto}
+  .dropzone .dz-actions{margin-top:26px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+  .dropzone .dz-actions .btn{font-size:15px;padding:12px 22px}
+
+  /* ---- row delete ---- */
+  td.delcell,th.delcell{width:34px;text-align:center;padding:4px 4px !important}
+  th.delcell{cursor:default !important}
+  .rowdel{background:transparent;border:none;font-size:15px;padding:3px 6px;border-radius:7px;opacity:.45}
+  .rowdel:hover{opacity:1;background:var(--st-crit-bg)}
+
+  /* ---- export modal options ---- */
+  .exp-btn{display:flex;align-items:center;gap:13px;width:100%;text-align:left;margin:8px 0;
+           padding:13px 15px;border:1.5px solid var(--line);border-radius:11px;background:#fff}
+  .exp-btn:hover{border-color:var(--bl);background:var(--bl-soft)}
+  .exp-btn .ic{font-size:25px;flex:0 0 auto}
+  .exp-btn .tt{font-weight:800;color:var(--bl-dark)}
+  .exp-btn .ss{font-size:12px;color:var(--ink-2);margin-top:2px}
+
+  /* ---- reference date bar ---- */
+  .refdate{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 10px;background:linear-gradient(110deg,var(--bl-soft),#f3f8ff);
+           border:1px solid var(--bl-accent);border-left:5px solid var(--bl);border-radius:12px;
+           padding:10px 16px;margin-bottom:14px;font-size:13.5px;color:var(--ink-2)}
+  .refdate .rd-label{font-weight:800;color:var(--bl-dark);text-transform:uppercase;font-size:12px;letter-spacing:.4px}
+  .refdate .rd-date{font-weight:800;color:var(--bl-deep);font-size:15.5px}
+  .refdate .rd-sub{font-size:12px;color:var(--ink-3)}
+
+  /* ---- KPI tiles ---- */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px;margin-bottom:16px}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:13px 15px;position:relative}
+  .kpi .k-label{font-size:12px;font-weight:700;color:var(--ink-2);text-transform:uppercase;letter-spacing:.4px;
+                display:flex;align-items:center;gap:6px}
+  .kpi .k-val{font-size:29px;font-weight:800;margin-top:4px;color:var(--ink);font-variant-numeric:tabular-nums}
+  .kpi .k-sub{font-size:11.5px;color:var(--ink-3);margin-top:2px}
+  .kpi.accent{background:linear-gradient(135deg,var(--bl),var(--bl-dark));border-color:var(--bl-dark)}
+  .kpi.accent .k-label,.kpi.accent .k-val,.kpi.accent .k-sub{color:#fff}
+  .kpi.accent .k-sub{opacity:.8}
+  .kpi[data-st]{border-left:5px solid var(--st-none)}
+  .kpi[data-st="expired"]{border-left-color:var(--st-crit)}
+  .kpi[data-st="critical"]{border-left-color:var(--st-serious)}
+  .kpi[data-st="warning"]{border-left-color:var(--st-warn)}
+  .kpi[data-st="ok"]{border-left-color:var(--st-ok)}
+  .kpi.clickable{cursor:pointer}
+  .kpi.clickable:hover{border-color:var(--bl-accent);box-shadow:0 2px 8px rgba(15,44,86,.10)}
+
+  /* ---- cards ---- */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-bottom:16px;overflow:hidden}
+  .card > h3{font-size:14px;font-weight:800;color:var(--bl-dark);padding:12px 16px;border-bottom:1px solid var(--line);
+             display:flex;align-items:center;gap:8px;background:linear-gradient(180deg,#fbfdff,#f3f7fc)}
+  .card > h3 .dot{width:8px;height:8px;border-radius:50%;background:var(--bl);flex:0 0 auto}
+  .card .card-body{padding:14px 16px}
+
+  /* ---- warnings ---- */
+  .warn-list{list-style:none;max-height:340px;overflow:auto}
+  .warn-list li{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding:8px 16px;
+                border-bottom:1px solid var(--line);font-size:13.5px}
+  .warn-list li:last-child{border-bottom:none}
+  .warn-list .w-name{font-weight:700;min-width:160px}
+  .warn-list .w-lic{color:var(--ink-2);min-width:140px}
+  .warn-list .w-date{font-variant-numeric:tabular-nums;color:var(--ink-2)}
+  .warn-list .w-days{font-size:12px;color:var(--ink-3)}
+  .warn-empty{padding:16px;color:var(--ink-2);font-size:13.5px;display:flex;align-items:center;gap:8px}
+  .warn-more{padding:9px 16px;font-size:12.5px;color:var(--ink-3);border-top:1px solid var(--line)}
+
+  /* ---- status quick-filter bar (multi-select) ---- */
+  .statusbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:16px}
+  .statusbar .sb-label{font-size:12.5px;font-weight:800;color:var(--ink-2);text-transform:uppercase;letter-spacing:.4px}
+  .stchip{display:inline-flex;align-items:center;gap:7px;padding:7px 15px;border-radius:999px;font-size:13px;
+          font-weight:700;border:1.5px solid var(--line);background:#fff;color:var(--ink-2);transition:all .12s}
+  .stchip .cnt{font-variant-numeric:tabular-nums;background:var(--st-none-bg);border-radius:999px;
+               padding:1px 8px;font-size:11.5px}
+  .stchip:hover{border-color:var(--bl-accent)}
+  .stchip[aria-pressed="true"]{color:#fff;border-width:1.5px}
+  .stchip[data-st="expired"][aria-pressed="true"]{background:var(--st-crit);border-color:var(--st-crit)}
+  .stchip[data-st="critical"][aria-pressed="true"]{background:var(--st-serious);border-color:var(--st-serious)}
+  .stchip[data-st="warning"][aria-pressed="true"]{background:var(--st-warn);border-color:var(--st-warn);color:#5b3d00}
+  .stchip[data-st="ok"][aria-pressed="true"]{background:var(--st-ok);border-color:var(--st-ok)}
+  .stchip[data-st="none"][aria-pressed="true"]{background:var(--st-none);border-color:var(--st-none)}
+  .stchip[aria-pressed="true"] .cnt{background:rgba(255,255,255,.28);color:inherit}
+
+  /* ---- active-only toggle (in the quick-filter bar) ---- */
+  .sb-active{display:inline-flex;align-items:center;gap:7px;padding:7px 15px;border-radius:999px;font-size:13px;
+             font-weight:700;border:1.5px dashed var(--bl);background:#fff;color:var(--bl-dark);transition:all .12s}
+  .sb-active:hover{background:var(--bl-soft)}
+  .sb-active[aria-pressed="true"]{background:var(--bl);border-style:solid;color:#fff}
+  .sb-active .cnt{font-variant-numeric:tabular-nums;background:var(--bl-soft);color:var(--bl-dark);
+                  border-radius:999px;padding:1px 8px;font-size:11.5px}
+  .sb-active[aria-pressed="true"] .cnt{background:rgba(255,255,255,.28);color:#fff}
+
+  /* ---- sticky lead columns (delete/status/name) ---- */
+  table.data td.stick{position:sticky;z-index:1;background:var(--card);white-space:nowrap;
+                      overflow:hidden;text-overflow:ellipsis}
+  table.data tbody tr:nth-child(even) td.stick{background:#f7fafd}
+  table.data tbody tr:hover td.stick{background:var(--bl-soft)}
+  table.data thead th.stick{z-index:5}
+
+  /* ---- person link + detail modal ---- */
+  .plink{background:none;border:none;padding:0;color:var(--bl-dark);font-weight:700;font-size:inherit;
+         text-decoration:underline;text-decoration-color:var(--bl-accent);cursor:pointer;text-align:left}
+  .plink:hover{color:var(--bl)}
+  .pd-list{list-style:none;margin:6px 0 4px}
+  .pd-list li{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
+  .pd-list li:last-child{border-bottom:none}
+  .pd-list .pd-lic{flex:1 1 200px;font-weight:600}
+  .pd-list .pd-date{font-variant-numeric:tabular-nums;color:var(--ink-2)}
+  .pd-list .pd-days{font-size:12px;color:var(--ink-3)}
+  .pd-other{margin-top:6px;font-size:13px}
+  .pd-other div{padding:4px 0;border-bottom:1px dashed var(--line)}
+  .pd-other b{color:var(--ink-2);font-weight:700;margin-right:6px}
+  .modal h4{font-size:13px;color:var(--bl-dark);margin:14px 0 4px;text-transform:uppercase;letter-spacing:.4px}
+
+  /* ---- data quality report ---- */
+  .dq-sec{margin:10px 0}
+  .dq-sec h4{margin-top:4px}
+  .dq-list{list-style:none;font-size:12.5px;max-height:180px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+  .dq-list li{padding:5px 10px;border-bottom:1px solid var(--line);display:flex;gap:10px;flex-wrap:wrap}
+  .dq-list li:last-child{border-bottom:none}
+  .dq-list .t{color:var(--ink-3);min-width:130px}
+
+  /* ---- export status checkboxes ---- */
+  .exp-status{display:flex;flex-wrap:wrap;gap:7px 14px;margin:6px 0 12px;padding:11px 13px;
+              background:var(--bl-soft);border-radius:10px}
+  .exp-status label{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;
+                    margin:0;cursor:pointer;color:var(--ink)}
+  .exp-count{font-size:12.5px;color:var(--ink-2);margin-bottom:10px;font-variant-numeric:tabular-nums}
+
+  /* ---- month calendar ---- */
+  .cal-head{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line)}
+  .cal-head .cal-month{font-weight:800;color:var(--bl-dark);font-size:15px;min-width:170px;text-align:center}
+  .cal-head .btn{padding:5px 11px}
+  .cal-head .spacer{flex:1 1 auto}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;padding:12px 16px 16px}
+  .cal-wd{font-size:11px;font-weight:800;color:var(--ink-3);text-transform:uppercase;text-align:center;padding:2px 0}
+  .cal-day{min-height:58px;border:1px solid var(--line);border-radius:8px;padding:4px 6px;font-size:12px;
+           background:#fff;position:relative;text-align:left}
+  .cal-day.empty{border:none;background:transparent}
+  .cal-day .dnum{font-weight:700;color:var(--ink-2)}
+  .cal-day.today{border:2px solid var(--bl);background:var(--bl-soft)}
+  .cal-day.has{cursor:pointer}
+  .cal-day.has:hover{border-color:var(--bl-accent);box-shadow:0 2px 6px rgba(15,44,86,.12)}
+  .cal-badge{display:inline-flex;align-items:center;gap:3px;border-radius:999px;font-size:10.5px;font-weight:800;
+             padding:1px 7px;margin-top:3px}
+  .cal-badge.expired{background:var(--st-crit-bg);color:var(--st-crit-text);border:1px solid var(--st-crit)}
+  .cal-badge.critical{background:var(--st-serious-bg);color:var(--st-serious-text);border:1px solid var(--st-serious)}
+
+  /* ---- status chips: color + icon + text, never color alone ---- */
+  .chip{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:999px;font-size:11.5px;
+        font-weight:700;white-space:nowrap;border:1px solid transparent}
+  .chip.expired {background:var(--st-crit-bg);   color:var(--st-crit-text);   border-color:var(--st-crit)}
+  .chip.critical{background:var(--st-serious-bg);color:var(--st-serious-text);border-color:var(--st-serious)}
+  .chip.warning {background:var(--st-warn-bg);   color:var(--st-warn-text);   border-color:var(--st-warn)}
+  .chip.ok      {background:var(--st-ok-bg);     color:var(--st-ok-text);     border-color:var(--st-ok)}
+  .chip.none    {background:var(--st-none-bg);   color:var(--st-none-text);   border-color:var(--st-none)}
+
+  /* ---- filters ---- */
+  .filters{display:flex;flex-wrap:wrap;gap:9px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)}
+  .filters label{font-size:12px;font-weight:700;color:var(--ink-2)}
+  .filters input[type=search],.filters select{padding:7px 10px;border:1px solid var(--line);border-radius:8px;
+        background:#fff;color:var(--ink);min-width:120px;max-width:230px}
+  .filters input[type=search]{min-width:200px;flex:0 1 260px}
+  .filters .count{margin-left:auto;font-size:12.5px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+
+  /* ---- table ---- */
+  .table-wrap{overflow:auto;max-height:70vh}
+  table.data{border-collapse:collapse;width:100%;min-width:720px}
+  table.data thead th{position:sticky;top:0;z-index:2;background:var(--bl-dark);color:#fff;text-align:left;
+        padding:9px 10px;font-size:12px;letter-spacing:.3px;white-space:nowrap;cursor:pointer;user-select:none}
+  table.data thead th:hover{background:var(--bl)}
+  table.data thead th .arrow{font-size:10px;opacity:.9;margin-left:4px}
+  table.data tbody td{padding:7px 10px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:top}
+  table.data tbody tr:nth-child(even){background:#f7fafd}
+  table.data tbody tr:hover{background:var(--bl-soft)}
+  td.date-cell{white-space:nowrap;font-variant-numeric:tabular-nums}
+  td.date-cell .d{display:block;margin-bottom:2px}
+  .no-rows{padding:22px 16px;color:var(--ink-2)}
+
+  footer{padding:14px 22px 30px;color:var(--ink-3);font-size:12px;max-width:1500px;margin:0 auto}
+  footer .meta{margin-top:3px}
+
+  /* ---- toast ---- */
+  #toasts{position:fixed;bottom:18px;right:18px;display:flex;flex-direction:column;gap:8px;z-index:600;max-width:380px}
+  .toast{background:var(--bl-deep);color:#fff;padding:11px 16px;border-radius:10px;font-size:13.5px;
+         box-shadow:0 6px 22px rgba(15,44,86,.35);display:flex;gap:9px;align-items:center;
+         animation:tin .18s ease-out}
+  .toast .t-act{background:#fff;color:var(--bl-dark);border:none;border-radius:7px;padding:5px 12px;
+                font-weight:800;font-size:12.5px;flex:0 0 auto}
+  .toast .t-act:hover{background:var(--bl-soft)}
+  .toast.err{background:#8f1f1f}
+  .toast.warn{background:#7a5200}
+  @keyframes tin{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}
+
+  /* ---- modal ---- */
+  .modal-back{position:fixed;inset:0;background:rgba(15,26,46,.55);display:flex;align-items:center;
+              justify-content:center;z-index:500;padding:18px}
+  .modal{background:#fff;border-radius:14px;max-width:560px;width:100%;max-height:88vh;display:flex;
+         flex-direction:column;box-shadow:0 18px 60px rgba(9,20,40,.45)}
+  .modal header{background:linear-gradient(110deg,var(--bl),var(--bl-dark));border-radius:14px 14px 0 0;
+                padding:13px 18px;display:flex;align-items:center;gap:10px}
+  .modal header h2{font-size:15.5px;color:#fff;flex:1}
+  .modal .x{background:transparent;border:none;color:#fff;font-size:19px;line-height:1;padding:4px 8px;border-radius:7px}
+  .modal .x:hover{background:rgba(255,255,255,.18)}
+  .modal .m-body{padding:16px 18px;overflow:auto;font-size:13.5px}
+  .modal .m-body p{margin-bottom:10px}
+  .modal .m-foot{padding:12px 18px;border-top:1px solid var(--line);display:flex;gap:9px;justify-content:flex-end;flex-wrap:wrap}
+  .modal label{display:block;font-size:12.5px;font-weight:700;color:var(--ink-2);margin:10px 0 4px}
+  .modal input[type=text],.modal input[type=number],.modal select{width:100%;padding:8px 10px;
+        border:1px solid var(--line);border-radius:8px}
+  .col-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--line)}
+  .col-row:last-child{border-bottom:none}
+  .col-row .cl{flex:1;font-weight:600;overflow-wrap:anywhere}
+  .col-row select{width:150px}
+
+  .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+  /* ---- print: one-page report ---- */
+  @media print{
+    body{background:#fff}
+    .toolbar,.filters,.dropzone,.upload-page,#toasts,.modal-back,.hdr-right,.sheet-tabs,
+    .statusbar,.cal-card,td.delcell,th.delcell{display:none !important}
+    header{background:var(--bl-dark) !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .table-wrap{overflow:visible;max-height:none}
+    table.data{width:100% !important;table-layout:fixed !important;min-width:0 !important}
+    table.data thead th{position:static}
+    table.data td,table.data th{overflow-wrap:anywhere;white-space:normal !important;font-size:10.5px;padding:4px 5px}
+    .warn-list{max-height:none;overflow:visible}
+    .card,.kpi{break-inside:avoid;box-shadow:none}
+    main{padding:8px 0;max-width:none}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo" aria-hidden="true">IL</div>
+  <div class="titles">
+    <h1 data-i18n="appTitle">Instructor Overview – Dashboard</h1>
+    <div class="sub" data-i18n="appSub">Lizenz- &amp; Berechtigungsüberwachung · Ablaufdaten im Blick</div>
+  </div>
+  <div class="hdr-right">
+    <span id="saveBadge" class="badge" role="status" aria-live="polite">●</span>
+    <button id="btnReload" class="lang-btn" type="button" title="Refresh">↻</button>
+    <div class="lang-group" role="group" aria-label="DE / EN">
+      <button id="langDE" class="lang-btn" type="button" aria-pressed="true">DE</button>
+      <button id="langEN" class="lang-btn" type="button" aria-pressed="false">EN</button>
+    </div>
+  </div>
+</header>
+
+<div class="toolbar" id="toolbar">
+  <button class="btn" id="btnUpload" type="button">📄 <span data-i18n="btnUpload">Excel hochladen</span></button>
+  <input type="file" id="fileInput" accept=".xlsx,.xls,.xlsm,.xlsb,.csv" class="sr-only">
+  <button class="btn ghost" id="btnRefresh" type="button">🔄 <span data-i18n="btnRefresh">Aktualisieren</span></button>
+  <button class="btn ghost" id="btnBackupDown" type="button">💾 <span data-i18n="btnBackupDown">Backup (JSON) herunterladen</span></button>
+  <button class="btn ghost" id="btnBackupUp" type="button">📂 <span data-i18n="btnBackupUp">Backup laden</span></button>
+  <input type="file" id="backupInput" accept=".json,application/json" class="sr-only">
+  <button class="btn ghost" id="btnExport" type="button">⬇️ <span data-i18n="btnExport">Exportieren</span></button>
+  <button class="btn ghost" id="btnMail" type="button">✉️ <span data-i18n="btnMail">E-Mail</span></button>
+  <button class="btn ghost" id="btnColumns" type="button">🧭 <span data-i18n="btnColumns">Spalten</span></button>
+  <button class="btn ghost" id="btnQuality" type="button">🔎 <span data-i18n="btnQuality">Datenqualität</span></button>
+  <button class="btn ghost" id="btnCompare" type="button">🆚 <span data-i18n="btnCompare">Vergleich</span></button>
+  <input type="file" id="compareInput" accept=".xlsx,.xls,.xlsm,.xlsb,.csv" class="sr-only">
+  <button class="btn ghost" id="btnSettings" type="button">⚙️ <span data-i18n="btnSettings">Einstellungen</span></button>
+  <button class="btn ghost" id="btnPrint" type="button">🖨️ <span data-i18n="btnPrint">Drucken / PDF</span></button>
+  <span class="spacer"></span>
+  <button class="btn danger" id="btnClear" type="button">🗑️ <span data-i18n="btnClear">Daten löschen</span></button>
+</div>
+
+<main id="main"></main>
+
+<footer id="footer"></footer>
+
+<div id="toasts" aria-live="polite" aria-atomic="false"></div>
+<div id="modalHost"></div>
+
+<script src="vendor/xlsx.full.min.js"></script>
+<script src="vendor/jspdf.umd.min.js"></script>
+<script>
+"use strict";
+/* =========================================================================
+   Instructor & Examiner License Dashboard — single-file app, no server.
+   Data stays in the browser (localStorage) + manual JSON backups.
+   ========================================================================= */
+
+/* ---------- i18n ---------- */
+const I18N = {
+  de: {
+    appTitle: "Instructor Overview – Dashboard",
+    appSub: "Lizenz- & Berechtigungsüberwachung · Ablaufdaten im Blick",
+    reloadTitle: "Seite neu laden?",
+    reloadBody: "Beim Neuladen werden die geladenen Daten verworfen (es wird nichts gespeichert). Danach bitte die aktuelle Excel-Liste wieder hochladen.",
+    reloadBtn: "Neu laden",
+    updNote: "Update installiert — die App läuft jetzt in Version {v}.",
+    calTitle: "Monatskalender — Abgelaufen & Kritisch",
+    calToday: "Heute", calPrev: "Voriger Monat", calNext: "Nächster Monat",
+    calIcs: "In eigenen Kalender exportieren (.ics)",
+    calDayEntries: "Fällige Lizenzen am {d}",
+    personDetails: "Personal Details",
+    btnUpload: "Excel hochladen", btnRefresh: "Aktualisieren",
+    btnBackupDown: "Backup (JSON) herunterladen", btnBackupUp: "Backup laden",
+    btnColumns: "Spalten", btnSettings: "Einstellungen", btnPrint: "Drucken / PDF",
+    btnClear: "Daten löschen",
+    dzTitle: "Excel-Datei hier ablegen",
+    dzText: "oder per Button auswählen (.xlsx, .xls, .csv). Kopfzeile, Namens- und Datumsspalten werden automatisch erkannt.",
+    dzHint: "Alternativ kannst du ein früheres JSON-Backup wiederherstellen.",
+    dzBtn: "Datei auswählen", dzRestore: "Backup wiederherstellen",
+    kPersons: "Personen", kLicenses: "Lizenzeinträge", kExpired: "Abgelaufen",
+    kCritical: "Kritisch", kWarning: "Warnung", kOk: "Gültig",
+    kDays: "≤ {d} Tage", kOkSub: "> {d} Tage gültig", kFileSub: "aus Datei",
+    warnTitle: "Warnhinweise — abgelaufen & bald fällig",
+    warnNone: "Keine Warnungen — alle Lizenzen sind außerhalb des Warnfensters gültig. ✓",
+    warnMore: "… {n} weitere Einträge (Filter/Suche nutzen oder drucken für die Vollliste).",
+    daysAgo: "vor {d} Tagen abgelaufen", daysToday: "läuft heute ab", daysIn: "läuft in {d} Tagen ab",
+    tblTitle: "Alle Datensätze",
+    search: "Suche…", fltAll: "Alle",
+    stExpired: "Abgelaufen", stCritical: "Kritisch", stWarning: "Warnung", stOk: "Gültig", stNone: "Kein Datum",
+    stInvalid: "Datum ungültig",
+    fltReset: "Filter zurücksetzen", countOf: "{a} von {b} Zeilen",
+    colStatus: "Status", noRows: "Keine Zeilen entsprechen Suche/Filter.",
+    footAsOf: "Stand: {t}", footFile: "Datei: {f} · importiert {t} · {n} Zeilen",
+    footNoFile: "Noch keine Excel-Datei importiert.",
+    saveErr: "Einstellungen konnten nicht gespeichert werden ⚠",
+    refreshed: "Ansicht aktualisiert — Stand {t}",
+    imported: "{n} Zeilen in {s} Tab(s) importiert ({f})",
+    fltEmpty: "(leer)",
+    compactCols: "Nur Spalten mit Warnungen",
+    tabRows: "{n} Zeilen",
+    importErr: "Datei konnte nicht gelesen werden: {e}",
+    importEmpty: "Keine Datenzeilen in der Datei gefunden.",
+    backupDone: "Backup heruntergeladen.",
+    backupRestored: "Backup wiederhergestellt: {n} Zeilen.",
+    backupErr: "Backup ungültig: {e}",
+    setTitle: "Einstellungen", setCrit: "Kritisch ab (Tage bis Ablauf ≤)", setWarn: "Warnung ab (Tage bis Ablauf ≤)",
+    setHint: "Beispiel: Kritisch 30 / Warnung 90 → 0–30 Tage = kritisch, 31–90 Tage = Warnung.",
+    setErr: "Warn-Schwelle muss größer als die kritische Schwelle sein (beide ≥ 0).",
+    colTitle: "Spalten & Typen",
+    colHint: "Falsch erkannte Spalten hier umstellen. „Datum“ = wird als Ablaufdatum überwacht. Die Zuordnung wird für künftige Importe derselben Datei gemerkt.",
+    colText: "Text", colDate: "Datum",
+    clearTitle: "Alle Daten löschen?",
+    clearBody: "Alle importierten Daten und Einstellungen werden aus diesem Browser entfernt. Ein automatisches JSON-Backup wird vorher heruntergeladen.",
+    clearType: "Zur Bestätigung LÖSCHEN eintippen:", clearWord: "LÖSCHEN",
+    clearBtn: "Endgültig löschen", cleared: "Alle Daten gelöscht.",
+    cancel: "Abbrechen", save: "Speichern", close: "Schließen", apply: "Übernehmen",
+    licCol: "Spalte", person: "Person",
+    btnExport: "Exportieren",
+    expTitle: "Liste exportieren",
+    expHint: "Tab „{s}“ · Suche/Filter werden angewendet · {n} Zeile(n).",
+    expPdf: "PDF-Report", expPdfSub: "Übersichtlicher Ablauf-Report: abgelaufen & bald fällig",
+    expXlsx: "Excel (.xlsx)", expXlsxSub: "Alle Spalten inkl. Status, echte Datumszellen",
+    expCsv: "CSV (Semikolon)", expCsvSub: "Alle Spalten inkl. Status, für Excel/Import",
+    expDone: "Export erstellt: {f}", expNoRows: "Keine Zeilen im aktuellen Filter.",
+    pdfTitle: "Lizenz-Ablauf-Report", pdfLic: "Lizenz / Berechtigung", pdfDate: "Ablaufdatum",
+    pdfDays: "Hinweis", pdfPage: "Seite {a} von {b}",
+    pdfSummary: "Abgelaufen: {e} · Kritisch: {c} · Warnung: {w} · Gültig: {o}",
+    pdfNoWarn: "Keine Warnungen im aktuellen Filter — alle Lizenzen gültig.",
+    delRow: "Person löschen",
+    delTitle: "Person löschen?",
+    delBody: "„{n}“ wird aus dem Tab „{s}“ entfernt und erscheint nicht mehr im Dashboard. Direkt danach ist „Rückgängig“ möglich.",
+    delBtn: "Löschen", deletedMsg: "„{n}“ gelöscht.", undo: "Rückgängig", restoredMsg: "Wiederhergestellt.",
+    upBack: "← Zurück zum Dashboard",
+    upHasData: "Es sind bereits Daten geladen ({n} Zeilen). Ein neuer Upload ersetzt sie vollständig.",
+    sbLabel: "Schnellfilter", sbHint: "Mehrfachauswahl — kein Chip aktiv = alles anzeigen",
+    btnMail: "E-Mail",
+    mailTitle: "Report per E-Mail senden",
+    mailToLbl: "Empfänger (optional, wird gemerkt)",
+    mailToPh: "name@firma.com; name2@firma.com",
+    mailOpen: "✉️ E-Mail-Programm öffnen",
+    mailCopy: "📋 Text kopieren",
+    mailCopied: "Report-Text in die Zwischenablage kopiert.",
+    mailHint: "Der Report steht als Text im E-Mail-Entwurf. Anhänge sind per mailto nicht möglich — für die vollständige Liste bitte zusätzlich den PDF-/Excel-Export anhängen.",
+    mailSubject: "Lizenz-Report {s} — Stand {d}",
+    mailHead: "Lizenz-Ablauf-Report\nTab: {s}\nReferenzdatum: {d}\n{sum}\n",
+    mailTruncated: "… gekürzt ({n} weitere Einträge) — vollständige Liste siehe PDF-/Excel-Anhang.",
+    refDate: "Referenzdatum (heute)",
+    refDateSub: "Alle Ablauffristen werden gegen dieses tagesaktuelle Datum berechnet.",
+    activeOnly: "Nur Aktive",
+    personLicenses: "Lizenzen & Ablaufdaten", personOther: "Weitere Angaben",
+    personNoDates: "Keine Datumseinträge vorhanden.",
+    btnQuality: "Datenqualität",
+    dqTitle: "Datenqualitäts-Bericht (alle Tabs)",
+    dqInvalid: "Ungültige Datumswerte", dqDupes: "Mögliche Duplikate (gleicher Name)", dqNoName: "Zeilen ohne Namen",
+    dqNone: "Keine Probleme gefunden — Datenqualität in Ordnung. ✓",
+    dqExport: "Bericht als CSV", dqHits: "{n} Treffer",
+    dqTypeInvalid: "Ungültiges Datum", dqTypeDup: "Duplikat", dqTypeNoName: "Ohne Name",
+    dqCsvHead: "Typ;Tab;Person;Spalte;Wert",
+    cmpCsvHead: "Typ;Tab;Person;Spalte;Alt;Neu;Änderung",
+    cmpDups: "Mehrfach vorhandene Namen — nur die jeweils erste Zeile wird verglichen: {n}",
+    pwTitle: "Datei ist passwortgeschützt",
+    pwBody: "Diese Excel-Datei ist verschlüsselt. Bitte Passwort eingeben — es wird nur zum Entschlüsseln direkt im Browser verwendet und nicht gespeichert.",
+    pwLabel: "Passwort", pwOpen: "Entschlüsseln & öffnen",
+    pwWrong: "Entschlüsselung fehlgeschlagen — Passwort falsch?",
+    pwWorking: "Entschlüssele …",
+    expIcs: "Kalender (.ics)",
+    expIcsSub: "Termine mit Erinnerungen (30/7 Tage vorher) für Outlook & Co.",
+    icsSummary: "Lizenz läuft ab: {n} — {l}",
+    icsCalName: "Lizenz-Abläufe",
+    btnCompare: "Vergleich",
+    cmpTitle: "Versionsvergleich",
+    cmpBody: "Lade die ÄLTERE Excel-Version hoch — sie wird mit den aktuell geladenen Daten (neuer Stand) verglichen. Auch hier wird nichts gespeichert.",
+    cmpPick: "Ältere Datei auswählen",
+    cmpResTitle: "Vergleichsergebnis (alt → neu)",
+    cmpAdded: "Neue Personen", cmpRemoved: "Entfernte Personen", cmpChanged: "Geänderte Datumswerte",
+    cmpNone: "Keine Unterschiede gefunden — beide Versionen sind identisch.",
+    cmpOnlyTabs: "Tabs nur in einer Version: {t}",
+    cmpExt: "verlängert", cmpShort: "verkürzt", cmpNewVal: "neu eingetragen", cmpGoneVal: "entfernt",
+    cmpExport: "Ergebnis als CSV",
+    personExports: "Exportieren:",
+    noStore: "Keine Datenspeicherung",
+    noStoreLong: "Reiner Converter: Es werden keine Lizenzdaten gespeichert. Beim Schließen oder Neuladen der Seite ist alles weg — einfach immer die aktuelle Excel-Liste hochladen.",
+    expWhich: "Welche Status exportieren?",
+    expCount: "{n} Zeile(n) im Export.",
+    langSwitched: "Sprache auf Deutsch umgestellt.",
+    printHint: "Bitte zuerst Daten importieren.",
+    noNameCol: "(Zeile {i})"
+  },
+  en: {
+    appTitle: "Instructor Overview – Dashboard",
+    appSub: "License & qualification monitoring · expiry dates at a glance",
+    reloadTitle: "Reload the page?",
+    reloadBody: "Reloading discards the loaded data (nothing is stored). Please upload the current Excel list again afterwards.",
+    reloadBtn: "Reload",
+    updNote: "Update installed — the app is now running version {v}.",
+    calTitle: "Month calendar — expired & critical",
+    calToday: "Today", calPrev: "Previous month", calNext: "Next month",
+    calIcs: "Export to your own calendar (.ics)",
+    calDayEntries: "Licenses due on {d}",
+    personDetails: "Personal Details",
+    btnUpload: "Upload Excel", btnRefresh: "Refresh",
+    btnBackupDown: "Download backup (JSON)", btnBackupUp: "Load backup",
+    btnColumns: "Columns", btnSettings: "Settings", btnPrint: "Print / PDF",
+    btnClear: "Clear data",
+    dzTitle: "Drop your Excel file here",
+    dzText: "or pick it via the button (.xlsx, .xls, .csv). Header row, name and date columns are detected automatically.",
+    dzHint: "Alternatively restore a previous JSON backup.",
+    dzBtn: "Choose file", dzRestore: "Restore backup",
+    kPersons: "People", kLicenses: "License entries", kExpired: "Expired",
+    kCritical: "Critical", kWarning: "Warning", kOk: "Valid",
+    kDays: "≤ {d} days", kOkSub: "valid > {d} days", kFileSub: "from file",
+    warnTitle: "Alerts — expired & due soon",
+    warnNone: "No alerts — all licenses are valid beyond the warning window. ✓",
+    warnMore: "… {n} more entries (use search/filters or print for the full list).",
+    daysAgo: "expired {d} days ago", daysToday: "expires today", daysIn: "expires in {d} days",
+    tblTitle: "All records",
+    search: "Search…", fltAll: "All",
+    stExpired: "Expired", stCritical: "Critical", stWarning: "Warning", stOk: "Valid", stNone: "No date",
+    stInvalid: "invalid date",
+    fltReset: "Reset filters", countOf: "{a} of {b} rows",
+    colStatus: "Status", noRows: "No rows match search/filters.",
+    footAsOf: "As of: {t}", footFile: "File: {f} · imported {t} · {n} rows",
+    footNoFile: "No Excel file imported yet.",
+    saveErr: "Settings could not be saved ⚠",
+    refreshed: "View refreshed — as of {t}",
+    imported: "{n} rows imported across {s} tab(s) ({f})",
+    fltEmpty: "(empty)",
+    compactCols: "Warning columns only",
+    tabRows: "{n} rows",
+    importErr: "Could not read file: {e}",
+    importEmpty: "No data rows found in the file.",
+    backupDone: "Backup downloaded.",
+    backupRestored: "Backup restored: {n} rows.",
+    backupErr: "Invalid backup: {e}",
+    setTitle: "Settings", setCrit: "Critical from (days to expiry ≤)", setWarn: "Warning from (days to expiry ≤)",
+    setHint: "Example: critical 30 / warning 90 → 0–30 days = critical, 31–90 days = warning.",
+    setErr: "Warning threshold must be greater than the critical threshold (both ≥ 0).",
+    colTitle: "Columns & types",
+    colHint: "Fix wrongly detected columns here. “Date” = monitored as expiry date. The mapping is remembered for future imports of the same file.",
+    colText: "Text", colDate: "Date",
+    clearTitle: "Delete all data?",
+    clearBody: "All imported data and settings will be removed from this browser. An automatic JSON backup is downloaded first.",
+    clearType: "Type DELETE to confirm:", clearWord: "DELETE",
+    clearBtn: "Delete permanently", cleared: "All data deleted.",
+    cancel: "Cancel", save: "Save", close: "Close", apply: "Apply",
+    licCol: "Column", person: "Person",
+    btnExport: "Export",
+    expTitle: "Export list",
+    expHint: "Tab “{s}” · search/filters apply · {n} row(s).",
+    expPdf: "PDF report", expPdfSub: "Clear expiry report: expired & due soon",
+    expXlsx: "Excel (.xlsx)", expXlsxSub: "All columns incl. status, real date cells",
+    expCsv: "CSV (semicolon)", expCsvSub: "All columns incl. status, for Excel/import",
+    expDone: "Export created: {f}", expNoRows: "No rows in the current filter.",
+    pdfTitle: "License Expiry Report", pdfLic: "License / qualification", pdfDate: "Expiry date",
+    pdfDays: "Note", pdfPage: "Page {a} of {b}",
+    pdfSummary: "Expired: {e} · Critical: {c} · Warning: {w} · Valid: {o}",
+    pdfNoWarn: "No alerts in the current filter — all licenses valid.",
+    delRow: "Delete person",
+    delTitle: "Delete person?",
+    delBody: "“{n}” will be removed from tab “{s}” and no longer appears in the dashboard. You can undo right afterwards.",
+    delBtn: "Delete", deletedMsg: "“{n}” deleted.", undo: "Undo", restoredMsg: "Restored.",
+    upBack: "← Back to dashboard",
+    upHasData: "Data is already loaded ({n} rows). A new upload replaces it completely.",
+    sbLabel: "Quick filter", sbHint: "Multi-select — no active chip = show everything",
+    btnMail: "Email",
+    mailTitle: "Send report by email",
+    mailToLbl: "Recipients (optional, remembered)",
+    mailToPh: "name@company.com; name2@company.com",
+    mailOpen: "✉️ Open email client",
+    mailCopy: "📋 Copy text",
+    mailCopied: "Report text copied to clipboard.",
+    mailHint: "The report is placed as text in the email draft. Attachments are not possible via mailto — please also attach the PDF/Excel export for the complete list.",
+    mailSubject: "License report {s} — as of {d}",
+    mailHead: "License Expiry Report\nTab: {s}\nReference date: {d}\n{sum}\n",
+    mailTruncated: "… truncated ({n} more entries) — see attached PDF/Excel for the full list.",
+    refDate: "Reference date (today)",
+    refDateSub: "All expiry deadlines are calculated against this current date.",
+    activeOnly: "Active only",
+    personLicenses: "Licenses & expiry dates", personOther: "Other details",
+    personNoDates: "No date entries available.",
+    btnQuality: "Data quality",
+    dqTitle: "Data quality report (all tabs)",
+    dqInvalid: "Invalid date values", dqDupes: "Possible duplicates (same name)", dqNoName: "Rows without a name",
+    dqNone: "No issues found — data quality is fine. ✓",
+    dqExport: "Report as CSV", dqHits: "{n} hit(s)",
+    dqTypeInvalid: "Invalid date", dqTypeDup: "Duplicate", dqTypeNoName: "No name",
+    dqCsvHead: "Type;Tab;Person;Column;Value",
+    cmpCsvHead: "Type;Tab;Person;Column;Old;New;Change",
+    cmpDups: "Names occurring more than once — only the first row each is compared: {n}",
+    pwTitle: "File is password-protected",
+    pwBody: "This Excel file is encrypted. Please enter the password — it is only used to decrypt in the browser and is never stored.",
+    pwLabel: "Password", pwOpen: "Decrypt & open",
+    pwWrong: "Decryption failed — wrong password?",
+    pwWorking: "Decrypting …",
+    expIcs: "Calendar (.ics)",
+    expIcsSub: "Events with reminders (30/7 days ahead) for Outlook etc.",
+    icsSummary: "License expires: {n} — {l}",
+    icsCalName: "License expiries",
+    btnCompare: "Compare",
+    cmpTitle: "Version comparison",
+    cmpBody: "Upload the OLDER Excel version — it is compared against the currently loaded data (newer state). Nothing is stored here either.",
+    cmpPick: "Choose older file",
+    cmpResTitle: "Comparison result (old → new)",
+    cmpAdded: "New persons", cmpRemoved: "Removed persons", cmpChanged: "Changed date values",
+    cmpNone: "No differences found — both versions are identical.",
+    cmpOnlyTabs: "Tabs in only one version: {t}",
+    cmpExt: "extended", cmpShort: "shortened", cmpNewVal: "newly entered", cmpGoneVal: "removed",
+    cmpExport: "Result as CSV",
+    personExports: "Export:",
+    noStore: "No data stored",
+    noStoreLong: "Pure converter: no license data is stored. Closing or reloading the page discards everything — just upload the current Excel list each time.",
+    expWhich: "Which statuses to export?",
+    expCount: "{n} row(s) in the export.",
+    langSwitched: "Language switched to English.",
+    printHint: "Please import data first.",
+    noNameCol: "(row {i})"
+  }
+};
+function t(key, vars){
+  let s = (I18N[state.settings.lang] && I18N[state.settings.lang][key]) || I18N.de[key] || key;
+  if (vars) for (const k in vars) s = s.split("{"+k+"}").join(String(vars[k]));
+  return s;
+}
+
+/* ---------- security: escape ALL of & < > " ' ---------- */
+function esc(v){
+  return String(v == null ? "" : v)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+}
+
+/* ---------- shared helpers (single source of truth) ---------- */
+const pad2 = (n) => String(n).padStart(2, "0");
+/* "looks like a d.m.y date" — shared by parser, cell renderer and quality report */
+const DATE_LIKE_RE = /^\d{1,2}[.\/-]\d{1,2}[.\/-]\d{2,4}$/;
+function isDateLike(v){ return DATE_LIKE_RE.test(String(v == null ? "" : v).trim()); }
+function locale(){ return state.settings.lang === "de" ? "de-DE" : "en-GB"; }
+/* Intl formatters are expensive to construct — cache per language */
+const fmtCache = {};
+function cachedFmt(kind, opts){
+  const key = locale() + "|" + kind;
+  if (!fmtCache[key]){
+    try { fmtCache[key] = new Intl.DateTimeFormat(locale(), opts); }
+    catch(e){ console.error(e); fmtCache[key] = null; }
+  }
+  return fmtCache[key];
+}
+/* CSV: quote + neutralize leading formula characters (CSV injection) */
+function csvEscape(v){
+  let s = String(v == null ? "" : v);
+  if (/^[=+\-@\t]/.test(s) && !/^[-+]?\d+([.,]\d+)?$/.test(s)) s = "'" + s;
+  return /[";\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+function downloadCSV(lines, name){
+  downloadBlob(new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" }), name);
+}
+/* "expires in X days" text — shared by table, alerts, PDF, mail, person view */
+function daysText(days){
+  return days < 0 ? t("daysAgo", {d: -days}) : days === 0 ? t("daysToday") : t("daysIn", {d: days});
+}
+/* collect license items (name/lic/iso/days/status) from rows, filtered by status set,
+   sorted by expiry — shared by PDF, ICS and mail exports */
+function collectItems(rows, wanted){
+  const perLic = { expired: 0, critical: 0, warning: 0, ok: 0 };
+  const items = [];
+  for (const { row, idx, ev } of rows){
+    for (const it of ev.items){
+      if (!it.iso) continue;
+      perLic[it.status]++;
+      if (wanted.includes(it.status))
+        items.push({ name: rowName(row, idx), lic: it.col.label, iso: it.iso, days: it.days, status: it.status });
+    }
+  }
+  items.sort((a, b) => a.iso < b.iso ? -1 : a.iso > b.iso ? 1 : 0);
+  return { items, perLic };
+}
+
+/* ---------- state ---------- */
+const APP_VERSION = "1.0.0";
+const COPYRIGHT = "© Copyright by Patrick Thorn";
+const DEFAULT_MAILTO = "Pilotadmin@aviationacademy.at; Claudia.lautner@aviationacademy.at; " +
+  "Patrick.thorn@aviationacademy.at; Christian.terler@aviationacademy.at";
+/* Pure converter: license DATA is never stored — only user settings persist.
+   Every session starts empty; the current Excel list must be uploaded fresh. */
+const LS_SETTINGS_KEY = "ew-ilc-settings-v1";
+const LS_LEGACY_KEY = "ew-instructor-license-dashboard-v1";   // old full-state key: wiped on boot
+const LIMITS = { rows: 20000, cols: 200, cell: 4000, label: 300, overrides: 600, sheets: 20, backupBytes: 15*1024*1024 };
+
+function defaultState(){
+  return {
+    schemaVersion: 2,
+    meta: { fileName: "", importedAt: "" },
+    sheets: [],           // [{name, columns:[{key,label,type:'text'|'date'}], rows:[{c:{key:string}}]}]
+    active: 0,            // index of the sheet currently shown
+    settings: { lang: "de", critDays: 30, warnDays: 90, columnOverrides: {},
+                mailTo: DEFAULT_MAILTO, lastVersion: "" }
+  };
+}
+let state = defaultState();
+function sheet(){
+  return state.sheets[state.active] || { name: "", columns: [], rows: [] };
+}
+function defaultUI(){
+  /* statuses: multi-select quick filter — defaults to "expired" so the most
+     urgent entries are in focus right after upload; reset shows everything */
+  return { q:"", statuses:["expired"], colFilters:{}, sortKey:"__status", sortDir:1,
+           compact:false, activeOnly:false, calMonth:null };
+}
+function toggleStatus(st){
+  const i = ui.statuses.indexOf(st);
+  if (i >= 0) ui.statuses.splice(i, 1); else ui.statuses.push(st);
+}
+let ui = defaultUI();
+let currentView = "dash";        // 'dash' | 'upload' — upload is forced while no data exists
+let renderedDay = "";            // ISO day the view was last rendered for (midnight rollover watch)
+
+/* ---------- storage: SETTINGS ONLY — license data is never persisted ---------- */
+function loadState(){
+  try {
+    /* wipe any data stored by older versions of this app */
+    const legacy = localStorage.getItem(LS_LEGACY_KEY);
+    if (legacy){
+      try {
+        const old = JSON.parse(legacy);
+        if (old && typeof old.settings === "object" && !localStorage.getItem(LS_SETTINGS_KEY))
+          localStorage.setItem(LS_SETTINGS_KEY, JSON.stringify(old.settings));
+      } catch(e){ console.error("legacy settings unreadable", e); }
+      localStorage.removeItem(LS_LEGACY_KEY);
+    }
+    const raw = localStorage.getItem(LS_SETTINGS_KEY);
+    if (raw){
+      const s = sanitizeState({ settings: JSON.parse(raw) });   // reuse whitelist/coerce path
+      state.settings = s.settings;
+    }
+  } catch(e){ console.error("settings read failed", e); }
+}
+function saveState(){
+  /* data stays in memory only; persist just the settings */
+  try {
+    localStorage.setItem(LS_SETTINGS_KEY, JSON.stringify(state.settings));
+    return true;
+  } catch(e){
+    console.error("settings write failed", e);
+    toast(t("saveErr"), "err");        // honest feedback — never swallow storage failures
+    return false;
+  }
+}
+function setSaveBadge(){
+  const b = document.getElementById("saveBadge");
+  b.className = "badge";
+  b.textContent = "🔒 " + t("noStore");
+}
+
+/* ---------- schema validation (whitelist + coerce + cap) ---------- */
+function capStr(v, max){ const s = String(v == null ? "" : v); return s.length > max ? s.slice(0, max) : s; }
+function coerceInt(v, def, min, max){
+  const n = Math.round(Number(v));
+  if (!isFinite(n)) return def;
+  return Math.min(max, Math.max(min, n));
+}
+function sanitizeSheet(sh){
+  if (typeof sh !== "object" || sh === null) return null;
+  const cols = Array.isArray(sh.columns) ? sh.columns.slice(0, LIMITS.cols) : [];
+  const keySet = new Set();
+  const outCols = [];
+  for (const c of cols){
+    if (typeof c !== "object" || c === null) continue;
+    const key = capStr(c.key, 24);
+    if (!/^c\d{1,4}$/.test(key) || keySet.has(key)) continue;
+    keySet.add(key);
+    const col = {
+      key,
+      label: capStr(c.label, LIMITS.label),
+      type: c.type === "date" ? "date" : "text"
+    };
+    if (c.ovKey != null) col.ovKey = capStr(c.ovKey, LIMITS.label * 2);
+    outCols.push(col);
+  }
+  const rows = Array.isArray(sh.rows) ? sh.rows.slice(0, LIMITS.rows) : [];
+  const outRows = [];
+  for (const r of rows){
+    if (typeof r !== "object" || r === null) continue;
+    const cells = (typeof r.c === "object" && r.c) || {};
+    const out = {};
+    let any = false;
+    for (const k of keySet){
+      if (cells[k] != null && cells[k] !== ""){
+        out[k] = capStr(cells[k], LIMITS.cell);
+        any = true;
+      }
+    }
+    if (any) outRows.push({ c: out });
+  }
+  if (!outCols.length || !outRows.length) return null;
+  return { name: capStr(sh.name, LIMITS.label) || "Tab", columns: outCols, rows: outRows };
+}
+function sanitizeState(o){
+  if (typeof o !== "object" || o === null) throw new Error("not an object");
+  const s = defaultState();
+  const meta = (typeof o.meta === "object" && o.meta) || {};
+  s.meta.fileName = capStr(meta.fileName, LIMITS.label);
+  s.meta.importedAt = capStr(meta.importedAt, 40);
+
+  let sheetsIn = [];
+  if (Array.isArray(o.sheets)) sheetsIn = o.sheets.slice(0, LIMITS.sheets);
+  else if (Array.isArray(o.columns) || Array.isArray(o.rows))
+    sheetsIn = [{ name: "Import", columns: o.columns, rows: o.rows }];   // v1 migration
+  s.sheets = [];
+  for (const sh of sheetsIn){
+    const clean = sanitizeSheet(sh);
+    if (clean) s.sheets.push(clean);
+  }
+  s.active = coerceInt(o.active, 0, 0, Math.max(0, s.sheets.length - 1));
+
+  const set = (typeof o.settings === "object" && o.settings) || {};
+  s.settings.lang = set.lang === "en" ? "en" : "de";
+  /* default recipients only when the field was never set — an intentionally
+     cleared list (empty string) must stay cleared */
+  s.settings.mailTo = set.mailTo == null ? DEFAULT_MAILTO : capStr(set.mailTo, 500);
+  s.settings.lastVersion = capStr(set.lastVersion, 20);
+  s.settings.critDays = coerceInt(set.critDays, 30, 0, 3650);
+  s.settings.warnDays = coerceInt(set.warnDays, 90, 0, 3650);
+  if (s.settings.warnDays <= s.settings.critDays) s.settings.warnDays = s.settings.critDays + 1;
+  s.settings.columnOverrides = {};
+  if (typeof set.columnOverrides === "object" && set.columnOverrides){
+    let n = 0;
+    for (const k in set.columnOverrides){
+      if (n >= LIMITS.overrides) break;
+      const v = set.columnOverrides[k];
+      if (v === "date" || v === "text"){
+        s.settings.columnOverrides[capStr(k, LIMITS.label)] = v;
+        n++;
+      }
+    }
+  }
+  return s;
+}
+
+/* ---------- dates ---------- */
+function todayParts(){
+  const d = new Date();                       // always derived live — never hardcoded
+  return { y: d.getFullYear(), m: d.getMonth()+1, d: d.getDate() };
+}
+function todayUTCms(){
+  const p = todayParts();
+  return Date.UTC(p.y, p.m-1, p.d);
+}
+function isoFromYMD(y, m, d){
+  if (!(y >= 1900 && y <= 2200 && m >= 1 && m <= 12 && d >= 1 && d <= 31)) return null;
+  const dt = new Date(Date.UTC(y, m-1, d));
+  if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== m-1 || dt.getUTCDate() !== d) return null;
+  return dt.toISOString().slice(0,10);
+}
+/* Parse a stored cell string into ISO date (dd.mm.yyyy / dd-mm-yyyy / dd/mm/yyyy / yyyy-mm-dd). European day-first. */
+function parseDateString(sRaw){
+  if (sRaw == null) return null;
+  const s = String(sRaw).trim();
+  if (!s) return null;
+  let m = s.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s].*)?$/);
+  if (m) return isoFromYMD(+m[1], +m[2], +m[3]);
+  m = s.match(/^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{2,4})$/);
+  if (m){
+    let y = +m[3];
+    if (y < 100) y += (y >= 70 ? 1900 : 2000);
+    return isoFromYMD(y, +m[2], +m[1]);
+  }
+  return null;
+}
+function fmtDate(iso){
+  if (!iso) return "";
+  const p = iso.split("-");
+  const f = cachedFmt("d", { year:"numeric", month:"2-digit", day:"2-digit", timeZone:"UTC" });
+  return f ? f.format(new Date(Date.UTC(+p[0], +p[1]-1, +p[2]))) : iso;
+}
+function todayISO(){
+  const p = todayParts();
+  return p.y + "-" + pad2(p.m) + "-" + pad2(p.d);
+}
+function fmtTodayLong(){
+  const f = cachedFmt("long", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+  return f ? f.format(new Date()) : todayISO();
+}
+function fmtNow(){
+  const f = cachedFmt("now", { dateStyle:"medium", timeStyle:"short" });
+  return f ? f.format(new Date()) : new Date().toLocaleString();
+}
+function daysUntil(iso){
+  const p = iso.split("-");
+  return Math.round((Date.UTC(+p[0], +p[1]-1, +p[2]) - todayUTCms()) / 86400000);
+}
+function statusForDays(days){
+  if (days < 0) return "expired";
+  if (days <= state.settings.critDays) return "critical";
+  if (days <= state.settings.warnDays) return "warning";
+  return "ok";
+}
+const ST_RANK = { expired: 0, critical: 1, warning: 2, ok: 3, none: 4 };
+const ST_ICON = { expired: "⛔", critical: "🔴", warning: "⚠️", ok: "✅", none: "–" };
+function stLabel(st){
+  return { expired:t("stExpired"), critical:t("stCritical"), warning:t("stWarning"), ok:t("stOk"), none:t("stNone") }[st];
+}
+function chip(st){
+  return '<span class="chip ' + st + '">' + ST_ICON[st] + " " + esc(stLabel(st)) + "</span>";
+}
+
+/* ---------- derived data ---------- */
+function dateCols(){ return sheet().columns.filter(c => c.type === "date"); }
+function textCols(){ return sheet().columns.filter(c => c.type === "text"); }
+function nameColKeysFor(sh){
+  const tc = sh.columns.filter(c => c.type === "text");
+  const first = tc.find(c => /first\s*name|vorname/i.test(c.label));
+  const last  = tc.find(c => /surname|last\s*name|nachname/i.test(c.label));
+  if (first && last) return [first.key, last.key];
+  const byName = tc.find(c => /name/i.test(c.label));
+  return byName ? [byName.key] : (tc[0] ? [tc[0].key] : []);
+}
+function nameColKeys(){ return nameColKeysFor(sheet()); }
+function rowNameFor(sh, row, i){
+  const parts = nameColKeysFor(sh).map(k => String(row.c[k] || "").trim()).filter(Boolean);
+  return parts.join(" ") || t("noNameCol", {i: i+1});
+}
+function rowName(row, i){ return rowNameFor(sheet(), row, i); }
+/* "Aktiv" flag column of the active sheet (e.g. an 'x' marker) */
+function aktivColKey(){
+  const c = textCols().find(col => /(^|·\s*)aktiv$/i.test(col.label.trim()));
+  return c ? c.key : null;
+}
+function isActiveRow(row, key){
+  const k = key !== undefined ? key : aktivColKey();   // callers in loops pass the hoisted key
+  return !k || !!(row.c[k] && String(row.c[k]).trim());
+}
+/* per-row evaluation: [{col, iso, days, status}] for date cols + overall worst status.
+   Memoized per row object; bumpEval() invalidates when thresholds, column types,
+   the reference day, or the loaded data change. */
+let evalEpoch = 0;
+function bumpEval(){ evalEpoch++; }
+const evalCache = new WeakMap();
+function evalRow(row){
+  const hit = evalCache.get(row);
+  if (hit && hit.e === evalEpoch) return hit.v;
+  const items = [];
+  let worst = "none";
+  for (const col of dateCols()){
+    const iso = parseDateString(row.c[col.key]);
+    if (!iso) {
+      if (row.c[col.key]) items.push({ col, iso: null, days: null, status: "none" });
+      continue;
+    }
+    const days = daysUntil(iso);
+    const st = statusForDays(days);
+    items.push({ col, iso, days, status: st });
+    if (ST_RANK[st] < ST_RANK[worst]) worst = st;
+  }
+  const v = { items, worst };
+  evalCache.set(row, { e: evalEpoch, v });
+  return v;
+}
+
+/* ---------- Excel import ---------- */
+function handleExcelFile(file){
+  const reader = new FileReader();
+  reader.onerror = () => toast(t("importErr", {e: "FileReader"}), "err");
+  reader.onload = (ev) => {
+    const bytes = new Uint8Array(ev.target.result);
+    try {
+      importWorkbook(bytes, file.name);
+    } catch(e){
+      console.error(e);
+      if (/password/i.test(e && e.message ? e.message : "")){
+        openPasswordModal(bytes, file.name);      // encrypted workbook → ask for the password
+      } else {
+        toast(t("importErr", {e: e && e.message ? e.message : e}), "err", 8000);
+      }
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+/* decryption support for password-protected workbooks (self-hosted xlsx-populate,
+   loaded lazily only when an encrypted file shows up; password is never stored) */
+let xpLoading = null;
+function loadXlsxPopulate(){
+  if (window.XlsxPopulate) return Promise.resolve();
+  if (xpLoading) return xpLoading;
+  xpLoading = new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = "vendor/xlsx-populate.min.js";
+    s.onload = () => resolve();
+    s.onerror = () => { xpLoading = null; reject(new Error("vendor/xlsx-populate.min.js")); };
+    document.head.appendChild(s);
+  });
+  return xpLoading;
+}
+function openPasswordModal(bytes, fileName, onData){
+  const handleDecrypted = onData || ((u8) => importWorkbook(u8, fileName));
+  openModal({
+    title: t("pwTitle"),
+    bodyHTML: "<p>" + esc(t("pwBody")) + "</p>" +
+      "<p><strong>" + esc(fileName) + "</strong></p>" +
+      '<label for="pwInput">' + esc(t("pwLabel")) + "</label>" +
+      '<input type="password" id="pwInput" autocomplete="off">' +
+      '<div class="exp-count" id="pwStatus" aria-live="polite"></div>',
+    buttons: [
+      { label: t("cancel"), kind: "ghost", onClick: () => true },
+      { label: t("pwOpen"), onClick: (back) => {
+          const pw = back.querySelector("#pwInput").value;
+          const status = back.querySelector("#pwStatus");
+          status.textContent = t("pwWorking");
+          let decrypted = false;
+          loadXlsxPopulate()
+            .then(() => window.XlsxPopulate.fromDataAsync(bytes.buffer, { password: pw }))
+            .then(wb => wb.outputAsync("uint8array"))
+            .then(u8 => {
+              decrypted = true;
+              closeModal();
+              handleDecrypted(u8);
+            })
+            .catch(err => {
+              console.error(err);
+              if (decrypted){
+                /* decryption succeeded — this is a parse error, not a wrong password */
+                toast(t("importErr", {e: err && err.message ? err.message : err}), "err", 8000);
+              } else {
+                if (document.contains(status)) status.textContent = "";
+                toast(t("pwWrong"), "err", 6000);
+              }
+            });
+          return false;   // keep the modal open until decryption succeeds
+      }}
+    ]
+  });
+}
+/* normalize a raw cell to a string / to an ISO date if it looks like one */
+function cellToString(v){
+  if (v == null) return "";
+  if (v instanceof Date){
+    const iso = isoFromYMD(v.getFullYear(), v.getMonth()+1, v.getDate());
+    return iso || "";
+  }
+  if (typeof v === "number") return String(v);
+  return capStr(String(v).trim(), LIMITS.cell);
+}
+function cellDateISO(v){
+  if (v instanceof Date) return isoFromYMD(v.getFullYear(), v.getMonth()+1, v.getDate());
+  /* plain numbers are NOT treated as date serials: with cellDates:true every
+     date-formatted Excel cell arrives as a Date object, so a bare number is a
+     real number (staff no., counter) — interpreting it as a serial corrupted data */
+  if (typeof v === "string") return parseDateString(v);
+  return null;
+}
+function headerText(v){
+  return (v == null ? "" : String(v)).replace(/\s+/g, " ").trim();
+}
+
+function parseSheet(ws, sheetName){
+  const grid = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: true });
+  if (!grid.length) return null;
+
+  /* header row = row (within first 15) with the most non-empty string cells */
+  let headerIdx = 0, best = -1;
+  for (let i = 0; i < Math.min(grid.length, 15); i++){
+    const row = grid[i] || [];
+    let score = 0;
+    for (const cell of row) if (typeof cell === "string" && cell.trim()) score++;
+    if (score >= 2 && score > best){ best = score; headerIdx = i; }
+  }
+  const headerRow = grid[headerIdx] || [];
+  const dataGrid = grid.slice(headerIdx + 1);
+
+  const nCols = Math.min(LIMITS.cols,
+    Math.max(headerRow.length, ...dataGrid.slice(0, 500).map(r => (r || []).length), 1));
+
+  /* group row above the header (e.g. aircraft type over TRI/SFI/TRE columns):
+     used when it has ≥2 labels or merged cells — expand merges, then forward-fill */
+  let groups = null;
+  if (headerIdx > 0){
+    const gRow = (grid[headerIdx - 1] || []).map(headerText);
+    const merges = (ws["!merges"] || []).filter(m => m.s.r === headerIdx - 1);
+    const distinct = new Set(gRow.filter(Boolean));
+    if (distinct.size >= 2 || merges.length){
+      groups = [];
+      for (let cIdx = 0; cIdx < nCols; cIdx++) groups.push(gRow[cIdx] || "");
+      for (const m of merges){
+        const v = groups[m.s.c] || "";
+        for (let cIdx = m.s.c; cIdx <= Math.min(m.e.c, nCols - 1); cIdx++) groups[cIdx] = v;
+      }
+      for (let cIdx = 1; cIdx < nCols; cIdx++)
+        if (!groups[cIdx]) groups[cIdx] = groups[cIdx - 1];   // "centered across" fallback
+    }
+  }
+
+  /* column stats for type detection */
+  const stats = [];
+  for (let cIdx = 0; cIdx < nCols; cIdx++) stats.push({ nonEmpty: 0, dateLike: 0 });
+  const rows = [];
+  for (const r of dataGrid){
+    if (rows.length >= LIMITS.rows) break;
+    const src = r || [];
+    let any = false;
+    const cells = {};
+    for (let cIdx = 0; cIdx < nCols; cIdx++){
+      const v = src[cIdx];
+      if (v == null || v === "" ) continue;
+      const iso = cellDateISO(v);
+      stats[cIdx].nonEmpty++;
+      if (iso) stats[cIdx].dateLike++;
+      cells["c"+cIdx] = iso || cellToString(v);
+      if (cells["c"+cIdx] === "") delete cells["c"+cIdx]; else any = true;
+    }
+    if (any) rows.push({ c: cells });
+  }
+  if (!rows.length) return null;
+
+  const overrides = state.settings.columnOverrides || {};
+  /* group prefix only where needed: sub-headers that repeat (TRI, SFI, Rating IR …) */
+  const subCount = {};
+  for (let cIdx = 0; cIdx < nCols; cIdx++){
+    const sub = headerText(headerRow[cIdx]);
+    if (!sub) continue;
+    subCount[sub] = (subCount[sub] || 0) + 1;
+  }
+  const columns = [];
+  const usedLabels = new Set();
+  const ovOcc = {};
+  for (let cIdx = 0; cIdx < nCols; cIdx++){
+    const sub = headerText(headerRow[cIdx]);
+    const grp = groups ? groups[cIdx] : "";
+    if (stats[cIdx].nonEmpty === 0 && !sub) continue;   // fully empty column
+    const needsPrefix = sub && grp && grp !== sub && subCount[sub] > 1;
+    const baseLabel = capStr(needsPrefix ? grp + " · " + sub
+              : (sub || grp || (t("licCol") + " " + (cIdx+1))), LIMITS.label);
+    let label = baseLabel;
+    if (usedLabels.has(label)){                          // keep labels unique per sheet
+      let n = 2;
+      while (usedLabels.has(label + " (" + n + ")")) n++;
+      label = label + " (" + n + ")";
+    }
+    usedLabels.add(label);
+    /* stable override key: base label + occurrence index — survives the "(2)"
+       display-dedup shifting when previously empty columns gain data */
+    const occ = ovOcc[baseLabel] = (ovOcc[baseLabel] || 0) + 1;
+    const ovKey = sheetName + "¦" + baseLabel + "¦" + occ;
+    /* date column if clearly date-dominated (≥60%) OR mixed but with a solid
+       date core (≥3 dates and ≥30%) — license columns often mix dates with
+       remarks like "TKI" or "N/A" and must still be monitored */
+    const ratio = stats[cIdx].nonEmpty > 0 ? stats[cIdx].dateLike / stats[cIdx].nonEmpty : 0;
+    let type = (ratio >= 0.6 && stats[cIdx].dateLike >= 1) ||
+               (stats[cIdx].dateLike >= 3 && ratio >= 0.3) ? "date" : "text";
+    const ovr = overrides[ovKey] !== undefined ? overrides[ovKey]
+              : overrides[sheetName + "¦" + label];       // legacy key fallback
+    if (ovr === "date" || ovr === "text") type = ovr;
+    columns.push({ key: "c"+cIdx, label, type, ovKey });
+  }
+  if (!columns.length) return null;
+  return { name: capStr(sheetName, LIMITS.label), columns, rows };
+}
+
+function parseWorkbookBytes(bytes){
+  const wb = XLSX.read(bytes, { type: "array", cellDates: true });
+  const sheets = [];
+  for (const name of wb.SheetNames){
+    if (sheets.length >= LIMITS.sheets) break;
+    const parsed = parseSheet(wb.Sheets[name], name);
+    if (parsed) sheets.push(parsed);
+  }
+  return sheets;
+}
+function importWorkbook(bytes, fileName){
+  const sheets = parseWorkbookBytes(bytes);
+  if (!sheets.length){ toast(t("importEmpty"), "warn"); return; }
+
+  state.meta.fileName = capStr(fileName, LIMITS.label);
+  state.meta.importedAt = new Date().toISOString();
+  state.sheets = sheets;
+  state.active = 0;
+  ui = defaultUI();
+  currentView = "dash";
+  saveState();
+  render();
+  const total = sheets.reduce((a, s) => a + s.rows.length, 0);
+  toast(t("imported", { n: total, s: sheets.length, f: fileName }));
+}
+
+/* ---------- backup ---------- */
+function downloadBackup(isAuto){
+  const payload = {
+    app: "instructor-license-dashboard",
+    schemaVersion: 2,
+    exportedAt: new Date().toISOString(),
+    meta: state.meta, sheets: state.sheets, active: state.active, settings: state.settings
+  };
+  const now = new Date();
+  const stamp = now.getFullYear() + pad2(now.getMonth()+1) + pad2(now.getDate()) + "-" + pad2(now.getHours()) + pad2(now.getMinutes());
+  const name = "license-dashboard-backup-" + stamp + (isAuto ? "-auto" : "") + ".json";
+  const blob = new Blob([JSON.stringify(payload, null, 1)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 800);
+  if (!isAuto) toast(t("backupDone"));
+}
+function handleBackupFile(file){
+  if (file.size > LIMITS.backupBytes){
+    toast(t("backupErr", {e: "> 15 MB"}), "err"); return;
+  }
+  const reader = new FileReader();
+  reader.onerror = () => toast(t("backupErr", {e: "FileReader"}), "err");
+  reader.onload = (ev) => {
+    try {
+      const obj = JSON.parse(ev.target.result);
+      if (typeof obj !== "object" || obj === null || obj.app !== "instructor-license-dashboard")
+        throw new Error("wrong app id");
+      if (typeof obj.schemaVersion !== "number" || obj.schemaVersion > 2)
+        throw new Error("schemaVersion " + obj.schemaVersion);
+      const next = sanitizeState(obj);   // whitelist + coerce + cap — never trust raw JSON
+      /* a backup may carry an old lastVersion — restoring is not an app update */
+      next.settings.lastVersion = APP_VERSION;
+      state = next;
+      ui = defaultUI();
+      currentView = "dash";
+      saveState();
+      applyStaticI18n();
+      render();
+      toast(t("backupRestored", { n: state.sheets.reduce((a, s) => a + s.rows.length, 0) }));
+    } catch(e){
+      console.error(e);
+      toast(t("backupErr", {e: e && e.message ? e.message : e}), "err", 8000);
+    }
+  };
+  reader.readAsText(file);
+}
+
+/* ---------- exports (current tab, current search/filters) ---------- */
+function exportStamp(){
+  const n = new Date();
+  return n.getFullYear() + pad2(n.getMonth()+1) + pad2(n.getDate());
+}
+function exportBaseName(suffix){
+  const tab = sheet().name.replace(/[^\wäöüÄÖÜß-]+/g, "_").slice(0, 40) || "export";
+  const sfx = suffix ? "-" + String(suffix).replace(/[^\wäöüÄÖÜß-]+/g, "_").slice(0, 40) : "";
+  return "lizenz-dashboard-" + tab + sfx + "-" + exportStamp();
+}
+function downloadBlob(blob, name){
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 800);
+}
+function exportXLSX(rows, suffix){
+  const cols = sheet().columns;
+  const aoa = [[t("colStatus")].concat(cols.map(c => c.label))];
+  for (const { row, ev } of rows){
+    const line = [stLabel(ev.worst)];
+    for (const c of cols){
+      const v = row.c[c.key] || "";
+      if (c.type === "date"){
+        const iso = parseDateString(v);
+        if (iso){
+          const p = iso.split("-");
+          line.push(new Date(Date.UTC(+p[0], +p[1]-1, +p[2])));   // real date cell, not text
+          continue;
+        }
+      }
+      line.push(v);
+    }
+    aoa.push(line);
+  }
+  const ws = XLSX.utils.aoa_to_sheet(aoa, { cellDates: true });
+  ws["!cols"] = [{ wch: 12 }].concat(cols.map(c => ({ wch: Math.min(28, Math.max(11, c.label.length + 2)) })));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, sheet().name.replace(/[\\\/\?\*\[\]:]/g, " ").slice(0, 31) || "Export");
+  const name = exportBaseName(suffix) + ".xlsx";
+  const out = XLSX.write(wb, { type: "array", bookType: "xlsx", cellDates: true });
+  downloadBlob(new Blob([out], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), name);
+  toast(t("expDone", {f: name}));
+}
+function exportCSV(rows, suffix){
+  const cols = sheet().columns;
+  const lines = [[t("colStatus")].concat(cols.map(c => c.label)).map(csvEscape).join(";")];
+  for (const { row, ev } of rows){
+    const line = [stLabel(ev.worst)];
+    for (const c of cols){
+      const v = row.c[c.key] || "";
+      const iso = c.type === "date" ? parseDateString(v) : null;
+      line.push(iso ? fmtDate(iso) : v);
+    }
+    lines.push(line.map(csvEscape).join(";"));
+  }
+  const name = exportBaseName(suffix) + ".csv";
+  downloadCSV(lines, name);
+  toast(t("expDone", {f: name}));
+}
+function exportPDF(rows, statusSet, suffix){
+  const doc = new window.jspdf.jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+  const W = 297, H = 210, M = 14;
+  /* statusSet controls which item statuses appear; default: alerts only */
+  const wanted = (statusSet && statusSet.length) ? statusSet : ["expired", "critical", "warning"];
+  const { items, perLic } = collectItems(rows, wanted);
+
+  const colX = [M, M+30, M+95, M+170, M+200];         // Status | Name | Lizenz | Datum | Hinweis
+  const colW = [28, 63, 73, 28, W-M-(M+200)];
+  const headerH = 8, rowH = 6.5;
+  let y = 0;
+
+  function pageHeader(){
+    doc.setFillColor(23, 63, 119);                     // --bl-dark
+    doc.rect(0, 0, W, 22, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold"); doc.setFontSize(14);
+    doc.text(t("pdfTitle"), M, 10);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(9);
+    doc.text(sheet().name + "  ·  " + t("footAsOf", {t: fmtNow()}), M, 17);
+    doc.text(t("appTitle"), W - M, 10, { align: "right" });
+    doc.setTextColor(30, 40, 60);
+    y = 30;
+    doc.setFontSize(9.5);
+    doc.text(t("pdfSummary", {e: perLic.expired, c: perLic.critical, w: perLic.warning, o: perLic.ok}), M, y);
+    y += 7;
+    tableHead();
+  }
+  function tableHead(){
+    doc.setFillColor(33, 96, 174);                     // --bl
+    doc.rect(M, y, W - 2*M, headerH, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold"); doc.setFontSize(9);
+    const labels = [t("colStatus"), t("person"), t("pdfLic"), t("pdfDate"), t("pdfDays")];
+    labels.forEach((l, i) => doc.text(l, colX[i] + 2, y + 5.5));
+    y += headerH;
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(30, 40, 60);
+  }
+  function pageFooter(){
+    doc.setFontSize(8);
+    doc.setTextColor(120, 130, 145);
+    doc.text(COPYRIGHT + "  ·  Version " + APP_VERSION, M, H - 7);
+    doc.setTextColor(30, 40, 60);
+  }
+  const ST_PDF = {
+    expired:  { label: () => stLabel("expired"),  rgb: [208, 59, 59]  },
+    critical: { label: () => stLabel("critical"), rgb: [236, 131, 90] },
+    warning:  { label: () => stLabel("warning"),  rgb: [178, 125, 12] },
+    ok:       { label: () => stLabel("ok"),       rgb: [8, 97, 8]     }
+  };
+  pageHeader();
+  if (!items.length){
+    doc.setFontSize(11);
+    doc.text(t("pdfNoWarn"), M, y + 8);
+  }
+  let alt = false;
+  for (const it of items){
+    if (y + rowH > H - 14){
+      pageFooter();
+      doc.addPage();
+      y = 0;
+      pageHeader();
+      alt = false;
+    }
+    if (alt){
+      doc.setFillColor(240, 245, 251);
+      doc.rect(M, y, W - 2*M, rowH, "F");
+    }
+    alt = !alt;
+    const st = ST_PDF[it.status];
+    doc.setTextColor(st.rgb[0], st.rgb[1], st.rgb[2]);
+    doc.setFont("helvetica", "bold");
+    doc.text(st.label(), colX[0] + 2, y + 4.7);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(30, 40, 60);
+    doc.setFontSize(9);
+    doc.text(String(it.name).slice(0, 40), colX[1] + 2, y + 4.7);
+    doc.text(String(it.lic).slice(0, 48), colX[2] + 2, y + 4.7);
+    doc.text(fmtDate(it.iso), colX[3] + 2, y + 4.7);
+    doc.text(daysText(it.days).slice(0, 34), colX[4] + 2, y + 4.7);
+    y += rowH;
+  }
+  pageFooter();
+  const total = doc.getNumberOfPages();
+  for (let i = 1; i <= total; i++){
+    doc.setPage(i);
+    doc.setFontSize(8);
+    doc.setTextColor(120, 130, 145);
+    doc.text(t("pdfPage", {a: i, b: total}), W - M, H - 7, { align: "right" });
+  }
+  const name = exportBaseName(suffix) + ".pdf";
+  doc.save(name);
+  toast(t("expDone", {f: name}));
+}
+
+/* iCal export: one all-day event per expiry date with 30/7-day reminders */
+function icsEscape(s){
+  return String(s).replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
+}
+function icsFold(line){
+  /* RFC 5545: physical lines ≤ 75 OCTETS (UTF-8), folds must not split a
+     code point — count bytes per code point and break before the limit */
+  const out = [];
+  let cur = "", bytes = 0;
+  for (const ch of line){                       // for..of iterates code points
+    const cp = ch.codePointAt(0);
+    const b = cp < 0x80 ? 1 : cp < 0x800 ? 2 : cp < 0x10000 ? 3 : 4;
+    if (bytes + b > 74){ out.push(cur); cur = " " + ch; bytes = 1 + b; }
+    else { cur += ch; bytes += b; }
+  }
+  out.push(cur);
+  return out.join("\r\n");
+}
+function exportICS(rows, statusSet, suffix){
+  const wanted = (statusSet && statusSet.length) ? statusSet : ["expired", "critical", "warning", "ok"];
+  const { items } = collectItems(rows, wanted);
+  if (!items.length){ toast(t("expNoRows"), "warn"); return; }
+  const now = new Date();
+  const dtstamp = now.getUTCFullYear() + pad2(now.getUTCMonth()+1) + pad2(now.getUTCDate()) +
+    "T" + pad2(now.getUTCHours()) + pad2(now.getUTCMinutes()) + pad2(now.getUTCSeconds()) + "Z";
+  const lines = [
+    "BEGIN:VCALENDAR", "VERSION:2.0",
+    "PRODID:-//Instructor License Dashboard//" + APP_VERSION + "//DE",
+    "CALSCALE:GREGORIAN", "METHOD:PUBLISH",
+    "X-WR-CALNAME:" + icsEscape(t("icsCalName") + " · " + sheet().name)
+  ];
+  let uidN = 0;
+  for (const it of items){
+    const d0 = it.iso.replace(/-/g, "");
+    const p = it.iso.split("-");
+    const next = new Date(Date.UTC(+p[0], +p[1]-1, +p[2]) + 86400000);
+    const d1 = next.getUTCFullYear() + pad2(next.getUTCMonth()+1) + pad2(next.getUTCDate());
+    const summary = t("icsSummary", {n: it.name, l: it.lic});
+    lines.push("BEGIN:VEVENT",
+      "UID:ilc-" + d0 + "-" + (++uidN) + "-" + dtstamp + "@license-dashboard",
+      "DTSTAMP:" + dtstamp,
+      "DTSTART;VALUE=DATE:" + d0,
+      "DTEND;VALUE=DATE:" + d1,
+      icsFold("SUMMARY:" + icsEscape("⚠ " + summary)),
+      icsFold("DESCRIPTION:" + icsEscape(summary + " (" + stLabel(it.status) + ")\n" + COPYRIGHT)),
+      "TRANSP:TRANSPARENT",
+      "BEGIN:VALARM", "ACTION:DISPLAY", icsFold("DESCRIPTION:" + icsEscape(summary)), "TRIGGER:-P30D", "END:VALARM",
+      "BEGIN:VALARM", "ACTION:DISPLAY", icsFold("DESCRIPTION:" + icsEscape(summary)), "TRIGGER:-P7D", "END:VALARM",
+      "END:VEVENT");
+  }
+  lines.push("END:VCALENDAR");
+  const name = exportBaseName(suffix) + ".ics";
+  downloadBlob(new Blob([lines.join("\r\n") + "\r\n"], { type: "text/calendar;charset=utf-8" }), name);
+  toast(t("expDone", {f: name}));
+}
+function openExport(){
+  if (!state.sheets.length){ toast(t("printHint"), "warn"); return; }
+  const opt = (id, ic, tt, ss) =>
+    '<button type="button" class="exp-btn" id="' + id + '"><span class="ic">' + ic + "</span>" +
+    "<span><span class='tt'>" + esc(tt) + "</span><div class='ss'>" + esc(ss) + "</div></span></button>";
+  /* status checkboxes — preset from the dashboard quick filter (none active = all) */
+  const preset = ui.statuses.length ? ui.statuses : ["expired", "critical", "warning", "ok", "none"];
+  const checks = ["expired", "critical", "warning", "ok", "none"].map(st =>
+    '<label><input type="checkbox" data-expst="' + st + '"' + (preset.includes(st) ? " checked" : "") + ">" +
+    ST_ICON[st] + " " + esc(stLabel(st)) + "</label>").join("");
+  openModal({
+    title: t("expTitle"),
+    bodyHTML: "<p>" + esc(t("expHint", {s: sheet().name, n: filteredRows(preset).length})) + "</p>" +
+      "<p><strong>" + esc(t("expWhich")) + "</strong></p>" +
+      '<div class="exp-status">' + checks + "</div>" +
+      '<div class="exp-count" id="expCount"></div>' +
+      opt("expPdf", "📕", t("expPdf"), t("expPdfSub")) +
+      opt("expXlsx", "📗", t("expXlsx"), t("expXlsxSub")) +
+      opt("expCsv", "📄", t("expCsv"), t("expCsvSub")) +
+      opt("expIcs", "📅", t("expIcs"), t("expIcsSub")),
+    buttons: [{ label: t("cancel"), kind: "ghost", onClick: () => true }],
+    onOpen: (back) => {
+      const readSet = () => [...back.querySelectorAll("[data-expst]:checked")].map(cb => cb.getAttribute("data-expst"));
+      const update = () => {
+        const set = readSet();
+        back.querySelector("#expCount").textContent = t("expCount", {n: set.length ? filteredRows(set).length : 0});
+      };
+      back.querySelectorAll("[data-expst]").forEach(cb => cb.addEventListener("change", update));
+      update();
+      /* row-based exports (Excel/CSV) filter whole persons by worst status;
+         item-based exports (PDF/ICS) must see ALL rows passing search/filters and
+         select single licenses by status — otherwise a person with a worse overall
+         status would lose their matching licenses from the report */
+      const run = (fn, itemBased) => {
+        const set = readSet();
+        if (!set.length){ toast(t("expNoRows"), "warn"); return; }
+        const rows = itemBased ? filteredRows([]) : filteredRows(set);
+        if (!rows.length){ toast(t("expNoRows"), "warn"); return; }
+        closeModal();
+        fn(rows, set);
+      };
+      back.querySelector("#expPdf").addEventListener("click", () => run(exportPDF, true));
+      back.querySelector("#expXlsx").addEventListener("click", () => run((r) => exportXLSX(r), false));
+      back.querySelector("#expCsv").addEventListener("click", () => run((r) => exportCSV(r), false));
+      back.querySelector("#expIcs").addEventListener("click", () => run((r, set) => exportICS(r, set), true));
+    }
+  });
+}
+
+/* ---------- email report (mailto — no server, no storage) ---------- */
+function mailItems(statusSet, rowsOverride){
+  const wanted = (statusSet && statusSet.length) ? statusSet : ["expired", "critical", "warning"];
+  /* filter at ITEM level only — a person whose worst status is outside the set
+     must still contribute their matching licenses */
+  return collectItems(rowsOverride || filteredRows([]), wanted);
+}
+function mailLine(it){
+  return "- [" + stLabel(it.status) + "] " + fmtDate(it.iso) + " | " + it.name + " | " + it.lic + " (" + daysText(it.days) + ")";
+}
+function mailText(statusSet, maxChars, rowsOverride){
+  const { items, perLic } = mailItems(statusSet, rowsOverride);
+  let text = t("mailHead", {
+    s: sheet().name, d: fmtTodayLong(),
+    sum: t("pdfSummary", {e: perLic.expired, c: perLic.critical, w: perLic.warning, o: perLic.ok})
+  }) + "\n";
+  let used = 0;
+  for (let i = 0; i < items.length; i++){
+    const line = mailLine(items[i]) + "\n";
+    if (maxChars && text.length + line.length > maxChars){
+      text += t("mailTruncated", {n: items.length - used}) + "\n";
+      break;
+    }
+    text += line;
+    used++;
+  }
+  if (!items.length) text += t("pdfNoWarn") + "\n";
+  text += "\n" + COPYRIGHT + " · Version " + APP_VERSION + "\n";
+  return text;
+}
+function buildMailto(to, statusSet, rowsOverride){
+  const subject = t("mailSubject", {s: sheet().name, d: fmtTodayLong()});
+  /* mailto URLs are length-limited (esp. Outlook) — cap the body, full text via copy button */
+  const body = mailText(statusSet, 1700, rowsOverride);
+  /* RFC 6068: multiple addresses are comma-separated and must not have their
+     separators percent-encoded — encode each address individually */
+  const addrs = String(to || "").split(/[;,]/).map(a => a.trim()).filter(Boolean)
+    .map(a => encodeURIComponent(a)).join(",");
+  return "mailto:" + addrs +
+    "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
+}
+function copyToClipboard(text){
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    return navigator.clipboard.writeText(text).then(() => true).catch(() => legacyCopy(text));
+  }
+  return Promise.resolve(legacyCopy(text));
+}
+function legacyCopy(text){
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.style.position = "fixed";
+  ta.style.opacity = "0";
+  document.body.appendChild(ta);
+  ta.select();
+  let done = false;
+  try { done = document.execCommand("copy"); } catch(e){ console.error(e); }
+  ta.remove();
+  return done;
+}
+function openMail(){
+  if (!state.sheets.length){ toast(t("printHint"), "warn"); return; }
+  const preset = ui.statuses.length ? ui.statuses : ["expired", "critical", "warning"];
+  const checks = ["expired", "critical", "warning", "ok"].map(st =>
+    '<label><input type="checkbox" data-mailst="' + st + '"' + (preset.includes(st) ? " checked" : "") + ">" +
+    ST_ICON[st] + " " + esc(stLabel(st)) + "</label>").join("");
+  openModal({
+    title: t("mailTitle"),
+    bodyHTML:
+      '<label for="mailTo">' + esc(t("mailToLbl")) + "</label>" +
+      '<input type="text" id="mailTo" placeholder="' + esc(t("mailToPh")) + '" value="' + esc(state.settings.mailTo) + '">' +
+      "<p style='margin-top:10px'><strong>" + esc(t("expWhich")) + "</strong></p>" +
+      '<div class="exp-status">' + checks + "</div>" +
+      '<div class="exp-count" id="mailCount"></div>' +
+      '<a class="btn" id="mailOpenLink" href="#" style="display:inline-flex;text-decoration:none;margin-right:8px">' + esc(t("mailOpen")) + "</a>" +
+      '<button type="button" class="btn ghost" id="mailCopyBtn">' + esc(t("mailCopy")) + "</button>" +
+      "<p style='margin-top:12px;font-size:12px;color:#4a5568'>" + esc(t("mailHint")) + "</p>",
+    buttons: [{ label: t("close"), kind: "ghost", onClick: () => true }],
+    onOpen: (back) => {
+      const readSet = () => [...back.querySelectorAll("[data-mailst]:checked")].map(cb => cb.getAttribute("data-mailst"));
+      const link = back.querySelector("#mailOpenLink");
+      const update = () => {
+        const set = readSet();
+        const n = set.length ? mailItems(set).items.length : 0;
+        back.querySelector("#mailCount").textContent = t("expCount", {n});
+        link.setAttribute("href", set.length ? buildMailto(back.querySelector("#mailTo").value, set) : "#");
+        link.setAttribute("aria-disabled", String(!set.length));
+      };
+      back.querySelectorAll("[data-mailst]").forEach(cb => cb.addEventListener("change", update));
+      back.querySelector("#mailTo").addEventListener("input", update);
+      const remember = () => {
+        state.settings.mailTo = capStr(back.querySelector("#mailTo").value.trim(), 500);
+        saveState();
+      };
+      link.addEventListener("click", (e) => {
+        /* nothing selected → block instead of silently mailing the default report */
+        if (!readSet().length){ e.preventDefault(); toast(t("expNoRows"), "warn"); return; }
+        remember();
+      });
+      back.querySelector("#mailCopyBtn").addEventListener("click", () => {
+        const set = readSet();
+        if (!set.length){ toast(t("expNoRows"), "warn"); return; }
+        remember();
+        copyToClipboard(mailText(set, 0)).then(okCopy => {
+          toast(okCopy ? t("mailCopied") : t("backupErr", {e: "clipboard"}), okCopy ? "" : "err");
+        });
+      });
+      update();
+    }
+  });
+}
+
+/* ---------- toast ---------- */
+function toast(msg, kind, ms, action){
+  const host = document.getElementById("toasts");
+  const el = document.createElement("div");
+  el.className = "toast" + (kind === "err" ? " err" : kind === "warn" ? " warn" : "");
+  const span = document.createElement("span");
+  span.textContent = msg;
+  el.appendChild(span);
+  if (action){
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "t-act";
+    b.textContent = action.label;
+    b.addEventListener("click", () => { el.remove(); action.fn(); });
+    el.appendChild(b);
+  }
+  host.appendChild(el);
+  setTimeout(() => el.remove(), ms || (action ? 8000 : 4500));
+}
+
+/* ---------- modal (focus trap, Esc, focus return; no native confirm/prompt) ---------- */
+let modalPrevFocus = null;
+function openModal({ title, bodyHTML, buttons, onOpen }){
+  closeModal();
+  modalPrevFocus = document.activeElement;
+  const host = document.getElementById("modalHost");
+  const back = document.createElement("div");
+  back.className = "modal-back";
+  back.innerHTML =
+    '<div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">' +
+      "<header><h2 id='mTitle'>" + esc(title) + "</h2>" +
+      '<button class="x" type="button" aria-label="' + esc(t("close")) + '">✕</button></header>' +
+      '<div class="m-body">' + bodyHTML + "</div>" +
+      '<div class="m-foot"></div>' +
+    "</div>";
+  host.appendChild(back);
+  const foot = back.querySelector(".m-foot");
+  for (const b of (buttons || [])){
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "btn" + (b.kind ? " " + b.kind : "");
+    btn.textContent = b.label;
+    btn.addEventListener("click", () => { if (b.onClick(back) !== false) closeModal(); });
+    foot.appendChild(btn);
+  }
+  back.querySelector(".x").addEventListener("click", closeModal);
+  back.addEventListener("mousedown", (e) => { if (e.target === back) closeModal(); });
+  back.addEventListener("keydown", (e) => {
+    if (e.key === "Escape"){ e.preventDefault(); closeModal(); }
+    if (e.key === "Tab"){
+      const f = back.querySelectorAll("button,input,select,textarea,a[href],[tabindex]");
+      if (!f.length) return;
+      const first = f[0], last = f[f.length-1];
+      if (e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
+    }
+  });
+  const firstInput = back.querySelector(".m-body input, .m-body select") || back.querySelector(".m-foot button") || back.querySelector(".x");
+  if (firstInput) firstInput.focus();
+  if (onOpen) onOpen(back);
+}
+function closeModal(){
+  const host = document.getElementById("modalHost");
+  host.innerHTML = "";
+  if (modalPrevFocus && document.contains(modalPrevFocus)) modalPrevFocus.focus();
+  modalPrevFocus = null;
+}
+
+/* ---------- rendering ---------- */
+function applyStaticI18n(){
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    el.textContent = t(el.getAttribute("data-i18n"));
+  });
+  document.documentElement.lang = state.settings.lang;
+  document.getElementById("langDE").setAttribute("aria-pressed", String(state.settings.lang === "de"));
+  document.getElementById("langEN").setAttribute("aria-pressed", String(state.settings.lang === "en"));
+  document.getElementById("btnReload").setAttribute("title", t("reloadBtn"));
+  document.getElementById("btnReload").setAttribute("aria-label", t("reloadBtn"));
+  setSaveBadge();
+}
+
+function filteredRows(statusOverride){
+  const q = ui.q.trim().toLowerCase();
+  const statuses = statusOverride !== undefined ? statusOverride : ui.statuses;
+  const aKey = ui.activeOnly ? aktivColKey() : null;
+  const out = [];
+  sheet().rows.forEach((row, idx) => {
+    if (ui.activeOnly && !isActiveRow(row, aKey)) return;
+    const ev = evalRow(row);
+    if (statuses.length && !statuses.includes(ev.worst)) return;
+    for (const k in ui.colFilters){
+      const want = ui.colFilters[k];
+      if (!want) continue;
+      const val = String(row.c[k] || "");
+      if (want === "__empty__"){ if (val !== "") return; }
+      else if (val !== want) return;
+    }
+    if (q){
+      let hit = false;
+      for (const c of sheet().columns){
+        const v = row.c[c.key];
+        if (v && String(v).toLowerCase().includes(q)){ hit = true; break; }
+      }
+      if (!hit && stLabel(ev.worst).toLowerCase().includes(q)) hit = true;
+      if (!hit) return;
+    }
+    out.push({ row, idx, ev });
+  });
+  /* sort — precompute per-row keys so the comparator does no parsing (O(n) not O(n log n)) */
+  const key = ui.sortKey, dir = ui.sortDir;
+  const isDateCol = sheet().columns.some(c => c.key === key && c.type === "date");
+  const sortKeys = new Map();
+  if (key === "__status"){
+    for (const e of out)
+      sortKeys.set(e, e.ev.items.reduce((min, i) => i.iso && i.iso < min ? i.iso : min, "9999"));
+  } else if (isDateCol){
+    for (const e of out) sortKeys.set(e, parseDateString(e.row.c[key]) || "9999-99-99");
+  }
+  out.sort((a, b) => {
+    let r = 0;
+    if (key === "__status"){
+      r = ST_RANK[a.ev.worst] - ST_RANK[b.ev.worst];
+      if (r === 0){
+        const ad = sortKeys.get(a), bd = sortKeys.get(b);
+        r = ad < bd ? -1 : ad > bd ? 1 : 0;
+      }
+    } else if (isDateCol){
+      const ai = sortKeys.get(a), bi = sortKeys.get(b);
+      r = ai < bi ? -1 : ai > bi ? 1 : 0;
+    } else {
+      r = String(a.row.c[key] || "").localeCompare(String(b.row.c[key] || ""), undefined, { sensitivity: "base", numeric: true });
+    }
+    return r * dir;
+  });
+  return out;
+}
+
+function render(){
+  if (renderedDay && renderedDay !== todayISO()) bumpEval();   // new reference day → re-evaluate all statuses
+  renderedDay = todayISO();
+  const main = document.getElementById("main");
+  if (!state.sheets.length || currentView === "upload"){
+    main.innerHTML = renderUpload();
+    wireUpload();
+    renderFooter();
+    return;
+  }
+  const sh = sheet();
+
+  /* ---- compute KPI + warning data in one pass (active sheet) ---- */
+  let totalLic = 0, personCount = 0, activeCount = 0;
+  const counts = { expired: 0, critical: 0, warning: 0, ok: 0, none: 0 };
+  const perLic = { expired: 0, critical: 0, warning: 0, ok: 0 };
+  const warnings = [];
+  const warnColKeys = new Set();
+  const aKey = aktivColKey();
+  sh.rows.forEach((row, idx) => {
+    if (isActiveRow(row, aKey)) activeCount++;
+    if (ui.activeOnly && !isActiveRow(row, aKey)) return;
+    personCount++;
+    const ev = evalRow(row);
+    counts[ev.worst]++;
+    for (const it of ev.items){
+      if (!it.iso) continue;
+      totalLic++;
+      perLic[it.status]++;
+      if (it.status !== "ok"){
+        warnColKeys.add(it.col.key);
+        warnings.push({ name: rowName(row, idx), col: it.col.label, iso: it.iso, days: it.days, status: it.status });
+      }
+    }
+  });
+  warnings.sort((a, b) => a.iso < b.iso ? -1 : a.iso > b.iso ? 1 : 0);
+
+  /* quick filter also applies to the alert list */
+  const visWarnings = ui.statuses.length ? warnings.filter(w => ui.statuses.includes(w.status)) : warnings;
+  const WARN_CAP = 300;
+  const shownWarnings = visWarnings.slice(0, WARN_CAP);
+
+  /* compact mode: name/flag columns + only date columns that carry a warning */
+  const nameKeys = new Set(nameColKeys());
+  let visCols = sh.columns;
+  if (ui.compact){
+    visCols = sh.columns.filter(c =>
+      nameKeys.has(c.key) ||
+      c.key === aKey ||                                   // same Aktiv detection as the toggle
+      (c.type === "date" && warnColKeys.has(c.key)));
+    if (!visCols.length) visCols = sh.columns;
+  }
+
+  let html = "";
+  /* sheet tabs */
+  if (state.sheets.length > 1){
+    html += '<div class="sheet-tabs" role="tablist">';
+    state.sheets.forEach((s, i) => {
+      html += '<button type="button" class="sheet-tab' + (i === state.active ? " active" : "") +
+        '" role="tab" aria-selected="' + (i === state.active) + '" data-sheet="' + i + '">' +
+        esc(s.name) + '<span class="n">' + esc(t("tabRows", {n: s.rows.length})) + "</span></button>";
+    });
+    html += "</div>";
+  }
+
+  /* reference date — always derived live from the system clock */
+  html += '<div class="refdate" id="refdate">📅 <span class="rd-label">' + esc(t("refDate")) + ":</span>" +
+    '<span class="rd-date">' + esc(fmtTodayLong()) + "</span>" +
+    '<span class="rd-sub">' + esc(t("refDateSub")) + "</span></div>";
+
+  /* KPI tiles */
+  html += '<div class="kpis">' +
+    kpiTile("accent", null, t("kPersons"), personCount, t("kFileSub")) +
+    kpiTile("accent", null, t("kLicenses"), totalLic, t("kFileSub")) +
+    kpiTile("clickable", "expired",  t("kExpired"),  perLic.expired,  ST_ICON.expired) +
+    kpiTile("clickable", "critical", t("kCritical"), perLic.critical, ST_ICON.critical + " " + t("kDays", {d: state.settings.critDays})) +
+    kpiTile("clickable", "warning",  t("kWarning"),  perLic.warning,  ST_ICON.warning + " " + t("kDays", {d: state.settings.warnDays})) +
+    kpiTile("clickable", "ok",       t("kOk"),       perLic.ok,       ST_ICON.ok + " " + t("kOkSub", {d: state.settings.warnDays})) +
+  "</div>";
+
+  /* status quick-filter bar — chips filter table ROWS by worst status, so they
+     show PERSON counts (the KPI tiles show license-entry counts, a different unit) */
+  const chipDefs = [
+    ["expired",  counts.expired], ["critical", counts.critical],
+    ["warning",  counts.warning], ["ok", counts.ok], ["none", counts.none]
+  ];
+  html += '<div class="statusbar" role="group" aria-label="' + esc(t("sbLabel")) + '" title="' + esc(t("sbHint")) + '">' +
+    '<span class="sb-label">' + esc(t("sbLabel")) + ":</span>" +
+    (aktivColKey()
+      ? '<button type="button" class="sb-active" id="sbActive" aria-pressed="' + ui.activeOnly + '">👤 ' +
+        esc(t("activeOnly")) + '<span class="cnt">' + activeCount + "</span></button>"
+      : "") +
+    chipDefs.map(([st, n]) =>
+      '<button type="button" class="stchip" data-st="' + st + '" aria-pressed="' + ui.statuses.includes(st) + '">' +
+      ST_ICON[st] + " " + esc(stLabel(st)) + '<span class="cnt">' + n + "</span></button>").join("") +
+    "</div>";
+
+  /* warnings card */
+  html += '<div class="card"><h3><span class="dot"></span>' + esc(t("warnTitle")) + "</h3>";
+  if (!visWarnings.length){
+    html += '<div class="warn-empty">✅ ' + esc(t("warnNone")) + "</div>";
+  } else {
+    html += '<ul class="warn-list">';
+    for (const w of shownWarnings){
+      const daysTxt = daysText(w.days);
+      html += "<li>" + chip(w.status) +
+        '<span class="w-name">' + esc(w.name) + "</span>" +
+        '<span class="w-lic">' + esc(w.col) + "</span>" +
+        '<span class="w-date">' + esc(fmtDate(w.iso)) + "</span>" +
+        '<span class="w-days">' + esc(daysTxt) + "</span></li>";
+    }
+    html += "</ul>";
+    if (visWarnings.length > WARN_CAP)
+      html += '<div class="warn-more">' + esc(t("warnMore", {n: visWarnings.length - WARN_CAP})) + "</div>";
+  }
+  html += "</div>";
+
+  /* month calendar */
+  if (!ui.calMonth) ui.calMonth = todayISO().slice(0, 7);
+  html += renderCalendar(calItemsByDay());
+
+  /* table card with filters */
+  const rows = filteredRows();
+  /* sticky lead columns: delete + status + name column(s) stay visible while scrolling */
+  const stickyLeft = { "__del": 0, "__status": 34 };
+  let leftAcc = 34 + 118;
+  for (const k of nameColKeys()){
+    if (visCols.some(c => c.key === k)){ stickyLeft[k] = leftAcc; leftAcc += 140; }
+  }
+  const stickStyle = (key, isName) => stickyLeft[key] !== undefined
+    ? ' style="left:' + stickyLeft[key] + "px;" + (key === "__status" ? "min-width:118px;max-width:118px;"
+        : isName ? "min-width:140px;max-width:140px;" : "") + '"'
+    : "";
+  html += '<div class="card"><h3><span class="dot"></span>' + esc(t("tblTitle")) + "</h3>";
+  html += renderFilters(rows.length, personCount);
+  html += '<div class="table-wrap"><table class="data" id="dataTable"><thead><tr>';
+  html += '<th class="delcell stick" scope="col" style="left:0"><span class="sr-only">' + esc(t("delRow")) + "</span></th>";
+  html += thCell("__status", t("colStatus"), stickStyle("__status"));
+  for (const c of visCols) html += thCell(c.key, c.label, stickStyle(c.key, true));
+  html += "</tr></thead><tbody>";
+  if (!rows.length){
+    html += '<tr><td colspan="' + (visCols.length + 2) + '" class="no-rows">' + esc(t("noRows")) + "</td></tr>";
+  } else {
+    const nameKeySet = new Set(nameColKeys());
+    for (const { row, idx, ev } of rows){
+      html += '<tr><td class="delcell stick" style="left:0"><button type="button" class="rowdel" data-del="' + idx +
+        '" title="' + esc(t("delRow")) + '" aria-label="' + esc(t("delRow")) + '">🗑</button></td>' +
+        '<td class="stick"' + stickStyle("__status") + ">" + chip(ev.worst) + "</td>";
+      for (const c of visCols){
+        const v = row.c[c.key] || "";
+        if (nameKeySet.has(c.key)){
+          /* name cell: sticky + click opens the person detail view; title shows truncated names in full */
+          html += '<td class="stick" title="' + esc(v) + '"' + stickStyle(c.key, true) + ">" +
+            (v ? '<button type="button" class="plink" data-person="' + idx + '">' + esc(v) + "</button>" : "") + "</td>";
+          continue;
+        }
+        if (c.type === "date"){
+          const iso = parseDateString(v);
+          if (iso){
+            const st = statusForDays(daysUntil(iso));
+            html += '<td class="date-cell"><span class="d">' + esc(fmtDate(iso)) + "</span>" + chip(st) + "</td>";
+          } else if (v && isDateLike(v)){
+            /* looks like a date but is not a real calendar day (e.g. 31.02.2024) — flag it */
+            html += '<td class="date-cell"><span class="d">' + esc(v) + '</span><span class="chip none">⚠ ' + esc(t("stInvalid")) + "</span></td>";
+          } else {
+            html += '<td class="date-cell">' + esc(v) + "</td>";
+          }
+        } else {
+          html += "<td>" + esc(v) + "</td>";
+        }
+      }
+      html += "</tr>";
+    }
+  }
+  html += "</tbody></table></div></div>";
+  main.innerHTML = html;
+  wireDashboard();
+  renderFooter();
+}
+
+/* ---------- month calendar (expired & critical on their expiry dates) ---------- */
+function calItemsByDay(){
+  const byDay = new Map();
+  for (const it of collectItems(filteredRows([]), ["expired", "critical"]).items){
+    if (!byDay.has(it.iso)) byDay.set(it.iso, []);
+    byDay.get(it.iso).push(it);
+  }
+  return byDay;
+}
+function renderCalendar(byDay){
+  const ym = ui.calMonth;
+  const y = +ym.slice(0, 4), m = +ym.slice(5, 7);
+  const monthFmt = cachedFmt("cal", { month: "long", year: "numeric", timeZone: "UTC" });
+  const label = monthFmt ? monthFmt.format(new Date(Date.UTC(y, m-1, 1))) : ym;
+  const firstDow = (new Date(Date.UTC(y, m-1, 1)).getUTCDay() + 6) % 7;   // Monday = 0
+  const dim = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const wdFmt = cachedFmt("wd", { weekday: "short", timeZone: "UTC" });
+  let cells = "";
+  for (let i = 0; i < 7; i++){
+    const wd = wdFmt ? wdFmt.format(new Date(Date.UTC(2024, 0, 1 + i))) : String(i);  // 2024-01-01 is a Monday
+    cells += '<div class="cal-wd">' + esc(wd) + "</div>";
+  }
+  for (let i = 0; i < firstDow; i++) cells += '<div class="cal-day empty"></div>';
+  const tISO = todayISO();
+  for (let d = 1; d <= dim; d++){
+    const iso = ym + "-" + pad2(d);
+    const entries = byDay.get(iso);
+    const cls = "cal-day" + (iso === tISO ? " today" : "") + (entries ? " has" : "");
+    if (!entries){
+      cells += '<div class="' + cls + '"><span class="dnum">' + d + "</span></div>";
+      continue;
+    }
+    const expN = entries.filter(e => e.status === "expired").length;
+    const critN = entries.length - expN;
+    cells += '<button type="button" class="' + cls + '" data-calday="' + iso + '" aria-label="' +
+      esc(t("calDayEntries", {d: fmtDate(iso)})) + '"><span class="dnum">' + d + "</span><br>" +
+      (expN ? '<span class="cal-badge expired">⛔ ' + expN + "</span> " : "") +
+      (critN ? '<span class="cal-badge critical">🔴 ' + critN + "</span>" : "") +
+      "</button>";
+  }
+  return '<div class="card cal-card"><h3><span class="dot"></span>' + esc(t("calTitle")) + "</h3>" +
+    '<div class="cal-head">' +
+      '<button class="btn ghost" id="calPrev" type="button" aria-label="' + esc(t("calPrev")) + '">‹</button>' +
+      '<span class="cal-month">' + esc(label) + "</span>" +
+      '<button class="btn ghost" id="calNext" type="button" aria-label="' + esc(t("calNext")) + '">›</button>' +
+      '<button class="btn ghost" id="calToday" type="button">' + esc(t("calToday")) + "</button>" +
+      '<span class="spacer"></span>' +
+      '<button class="btn" id="calIcs" type="button">📅 ' + esc(t("calIcs")) + "</button>" +
+    "</div>" +
+    '<div class="cal-grid">' + cells + "</div></div>";
+}
+function openCalDay(iso){
+  const entries = (calItemsByDay().get(iso) || []);
+  let body = '<ul class="pd-list">';
+  for (const it of entries){
+    body += "<li>" + chip(it.status) +
+      '<span class="pd-lic"><b>' + esc(it.name) + "</b> — " + esc(it.lic) + "</span>" +
+      '<span class="pd-days">' + esc(daysText(it.days)) + "</span></li>";
+  }
+  body += "</ul>";
+  openModal({
+    title: t("calDayEntries", {d: fmtDate(iso)}),
+    bodyHTML: body,
+    buttons: [{ label: t("close"), kind: "ghost", onClick: () => true }]
+  });
+}
+
+function kpiTile(extraClass, st, label, val, sub){
+  return '<div class="kpi ' + extraClass + '"' +
+    (st ? ' data-st="' + st + '" data-kpi="' + st + '" tabindex="0" role="button" aria-pressed="' + ui.statuses.includes(st) + '"' : "") + ">" +
+    '<div class="k-label">' + esc(label) + "</div>" +
+    '<div class="k-val">' + esc(val) + "</div>" +
+    '<div class="k-sub">' + esc(sub) + "</div></div>";
+}
+function thCell(key, label, stickStyleAttr){
+  const active = ui.sortKey === key;
+  const arrow = active ? (ui.sortDir === 1 ? "▲" : "▼") : "";
+  const stick = stickStyleAttr ? ' class="stick"' + stickStyleAttr : "";
+  return '<th scope="col"' + stick + ' data-sort="' + esc(key) + '" aria-sort="' + (active ? (ui.sortDir === 1 ? "ascending" : "descending") : "none") + '">' +
+    esc(label) + '<span class="arrow">' + arrow + "</span></th>";
+}
+
+function renderFilters(shownCount, baseCount){
+  /* dynamic value filters: up to 3 text columns with 1–25 distinct values
+     (an "(empty)" option is added when the column also has blank cells) */
+  let dyn = "";
+  let used = 0;
+  const nameKeys = new Set(nameColKeys());
+  for (const c of textCols()){
+    if (used >= 3) break;
+    if (nameKeys.has(c.key)) continue;
+    const vals = new Set();
+    let empty = 0;
+    for (const r of sheet().rows){
+      const v = r.c[c.key];
+      if (v) vals.add(String(v)); else empty++;
+      if (vals.size > 25) break;
+    }
+    if (vals.size < 1 || vals.size > 25) continue;
+    if (vals.size < 2 && !empty) continue;
+    used++;
+    const sorted = [...vals].sort((a,b) => a.localeCompare(b, undefined, {sensitivity:"base", numeric:true}));
+    dyn += '<label for="flt-' + esc(c.key) + '">' + esc(c.label) + "</label>" +
+      '<select id="flt-' + esc(c.key) + '" data-colfilter="' + esc(c.key) + '">' +
+      '<option value="">' + esc(t("fltAll")) + "</option>" +
+      (empty ? '<option value="__empty__"' + (ui.colFilters[c.key] === "__empty__" ? " selected" : "") + ">" + esc(t("fltEmpty")) + "</option>" : "") +
+      sorted.map(v => '<option value="' + esc(v) + '"' + (ui.colFilters[c.key] === v ? " selected" : "") + ">" + esc(v) + "</option>").join("") +
+      "</select>";
+  }
+  return '<div class="filters">' +
+    '<input type="search" id="fltQ" placeholder="' + esc(t("search")) + '" value="' + esc(ui.q) + '" aria-label="' + esc(t("search")) + '">' +
+    dyn +
+    '<label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer">' +
+      '<input type="checkbox" id="fltCompact"' + (ui.compact ? " checked" : "") + ">" + esc(t("compactCols")) + "</label>" +
+    '<button class="btn ghost" id="fltReset" type="button">↺ ' + esc(t("fltReset")) + "</button>" +
+    '<span class="count">' + esc(t("countOf", {a: shownCount, b: baseCount != null ? baseCount : sheet().rows.length})) + "</span>" +
+    "</div>";
+}
+
+function renderUpload(){
+  const hasData = state.sheets.length > 0;
+  const totalRows = state.sheets.reduce((a, s) => a + s.rows.length, 0);
+  return '<div class="upload-page">' +
+    (hasData ? '<div class="up-back"><button class="btn ghost" id="upBack" type="button">' + esc(t("upBack")) + "</button></div>" : "") +
+    '<div class="dropzone" id="dropzone">' +
+      '<div class="dz-icon" aria-hidden="true">📋</div>' +
+      "<h2>" + esc(t("dzTitle")) + "</h2>" +
+      "<p>" + esc(t("dzText")) + "</p>" +
+      "<p>" + esc(t("dzHint")) + "</p>" +
+      "<p>🔒 " + esc(t("noStoreLong")) + "</p>" +
+      (hasData ? "<p><strong>⚠ " + esc(t("upHasData", {n: totalRows})) + "</strong></p>" : "") +
+      '<div class="dz-actions">' +
+        '<button class="btn" id="dzPick" type="button">📄 ' + esc(t("dzBtn")) + "</button>" +
+        '<button class="btn ghost" id="dzRestore" type="button">📂 ' + esc(t("dzRestore")) + "</button>" +
+      "</div></div></div>";
+}
+
+function renderFooter(){
+  const f = document.getElementById("footer");
+  let html = "<div>" + esc(t("footAsOf", {t: fmtNow()})) + "</div>";
+  if (state.meta.fileName){
+    let imp = state.meta.importedAt;
+    try {
+      const f = cachedFmt("now", { dateStyle:"medium", timeStyle:"short" });
+      if (f) imp = f.format(new Date(state.meta.importedAt));
+    } catch(e){ console.error("importedAt unparseable", e); }
+    html += '<div class="meta">' + esc(t("footFile", {f: state.meta.fileName, t: imp, n: state.sheets.reduce((a, s) => a + s.rows.length, 0)})) + "</div>";
+  } else {
+    html += '<div class="meta">' + esc(t("footNoFile")) + "</div>";
+  }
+  html += '<div class="meta">🔒 ' + esc(t("noStoreLong")) + "</div>";
+  html += '<div class="meta"><b>' + esc(COPYRIGHT) + "</b> · Version " + esc(APP_VERSION) + "</div>";
+  f.innerHTML = html;
+}
+
+/* ---------- wiring ---------- */
+function wireUpload(){
+  const dz = document.getElementById("dropzone");
+  document.getElementById("dzPick").addEventListener("click", (e) => { e.stopPropagation(); document.getElementById("fileInput").click(); });
+  document.getElementById("dzRestore").addEventListener("click", (e) => { e.stopPropagation(); document.getElementById("backupInput").click(); });
+  dz.addEventListener("click", () => document.getElementById("fileInput").click());
+  ["dragenter","dragover"].forEach(evName => dz.addEventListener(evName, (e) => {
+    e.preventDefault(); dz.classList.add("drag");
+  }));
+  ["dragleave","drop"].forEach(evName => dz.addEventListener(evName, (e) => {
+    e.preventDefault(); dz.classList.remove("drag");
+  }));
+  dz.addEventListener("drop", (e) => {
+    e.stopPropagation();                          // the window-level handler must not process it again
+    const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (!f) return;
+    if (/\.json$/i.test(f.name)) handleBackupFile(f);
+    else handleExcelFile(f);
+  });
+  const back = document.getElementById("upBack");
+  if (back) back.addEventListener("click", () => { currentView = "dash"; render(); });
+}
+function wireDashboard(){
+  const q = document.getElementById("fltQ");
+  let qTimer = null;
+  q.addEventListener("input", () => {
+    clearTimeout(qTimer);
+    qTimer = setTimeout(() => {
+      ui.q = q.value;
+      render();
+      const nq = document.getElementById("fltQ");
+      nq.focus();
+      nq.setSelectionRange(nq.value.length, nq.value.length);
+    }, 220);
+  });
+  document.querySelectorAll(".stchip").forEach(chipBtn => {
+    chipBtn.addEventListener("click", () => {
+      toggleStatus(chipBtn.getAttribute("data-st"));
+      render();
+    });
+  });
+  const sbActive = document.getElementById("sbActive");
+  if (sbActive) sbActive.addEventListener("click", () => {
+    ui.activeOnly = !ui.activeOnly;
+    render();
+  });
+  document.querySelectorAll(".plink").forEach(pl => {
+    pl.addEventListener("click", () => openPerson(parseInt(pl.getAttribute("data-person"), 10)));
+  });
+  /* month calendar */
+  const refocus = (id) => {           // render() rebuilds #main — keep keyboard focus on the button
+    const el = document.getElementById(id);
+    if (el) el.focus();
+  };
+  const shiftMonth = (delta, focusId) => {
+    const y = +ui.calMonth.slice(0, 4), m = +ui.calMonth.slice(5, 7) - 1 + delta;
+    const d = new Date(Date.UTC(y, m, 1));
+    ui.calMonth = d.getUTCFullYear() + "-" + pad2(d.getUTCMonth() + 1);
+    render();
+    refocus(focusId);
+  };
+  const calPrev = document.getElementById("calPrev");
+  if (calPrev){
+    calPrev.addEventListener("click", () => shiftMonth(-1, "calPrev"));
+    document.getElementById("calNext").addEventListener("click", () => shiftMonth(1, "calNext"));
+    document.getElementById("calToday").addEventListener("click", () => {
+      ui.calMonth = todayISO().slice(0, 7);
+      render();
+      refocus("calToday");
+    });
+    document.getElementById("calIcs").addEventListener("click", () => {
+      const rows = filteredRows([]);
+      if (!rows.length){ toast(t("expNoRows"), "warn"); return; }
+      exportICS(rows, ["expired", "critical"], "kalender");
+    });
+    document.querySelectorAll("[data-calday]").forEach(cd => {
+      cd.addEventListener("click", () => openCalDay(cd.getAttribute("data-calday")));
+    });
+  }
+  document.querySelectorAll("[data-colfilter]").forEach(sel => {
+    sel.addEventListener("change", () => {
+      const k = sel.getAttribute("data-colfilter");
+      if (sel.value) ui.colFilters[k] = sel.value; else delete ui.colFilters[k];
+      render();
+    });
+  });
+  document.getElementById("fltReset").addEventListener("click", () => {
+    ui.q = ""; ui.statuses = []; ui.colFilters = {}; ui.activeOnly = false;
+    render();
+  });
+  document.getElementById("fltCompact").addEventListener("change", (e) => {
+    ui.compact = e.target.checked;
+    render();
+  });
+  document.querySelectorAll(".sheet-tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      const i = parseInt(tab.getAttribute("data-sheet"), 10);
+      if (!isFinite(i) || i === state.active || !state.sheets[i]) return;
+      state.active = i;
+      const keepCompact = ui.compact;
+      ui = defaultUI();
+      ui.compact = keepCompact;
+      saveState();
+      render();
+    });
+  });
+  document.querySelectorAll("th[data-sort]").forEach(th => {
+    th.addEventListener("click", () => {
+      const k = th.getAttribute("data-sort");
+      if (ui.sortKey === k) ui.sortDir = -ui.sortDir;
+      else { ui.sortKey = k; ui.sortDir = 1; }
+      render();
+    });
+  });
+  document.querySelectorAll(".rowdel").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const idx = parseInt(btn.getAttribute("data-del"), 10);
+      const sh = sheet();
+      if (!isFinite(idx) || !sh.rows[idx]) return;
+      const name = rowName(sh.rows[idx], idx);
+      openModal({
+        title: t("delTitle"),
+        bodyHTML: "<p>" + esc(t("delBody", {n: name, s: sh.name})) + "</p>",
+        buttons: [
+          { label: t("cancel"), kind: "ghost", onClick: () => true },
+          { label: t("delBtn"), kind: "danger", onClick: () => {
+              const removed = sh.rows.splice(idx, 1)[0];
+              saveState();
+              render();
+              toast(t("deletedMsg", {n: name}), "", 9000, {
+                label: t("undo"),
+                fn: () => {
+                  /* the sheet may have been replaced by a new upload/restore meanwhile */
+                  if (!state.sheets.includes(sh)){ toast(t("backupErr", {e: "Undo"}), "warn"); return; }
+                  sh.rows.splice(Math.min(idx, sh.rows.length), 0, removed);
+                  saveState();
+                  render();
+                  toast(t("restoredMsg"));
+                }
+              });
+              return true;
+          }}
+        ]
+      });
+    });
+  });
+  document.querySelectorAll("[data-kpi]").forEach(tile => {
+    const activate = () => {
+      toggleStatus(tile.getAttribute("data-kpi"));
+      render();
+    };
+    tile.addEventListener("click", activate);
+    tile.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " "){ e.preventDefault(); activate(); } });
+  });
+}
+
+/* ---------- person detail view ---------- */
+function openPerson(idx){
+  const sh = sheet();
+  const row = sh.rows[idx];
+  if (!row) return;
+  const ev = evalRow(row);
+  const nameKeySet = new Set(nameColKeys());
+  const items = ev.items.filter(i => i.iso).sort((a, b) => a.iso < b.iso ? -1 : 1);
+
+  /* Personal Details first, in a fixed order (missing fields show a dash) */
+  const PERSONAL_PATTERNS = [
+    /first\s*name|vorname/i, /surname|last\s*name|nachname/i, /pilot\s*lic/i,
+    /mail\s*aaa/i, /mail\s*priv/i, /telephone|telefon/i, /adresse|address/i, /home\s*base/i
+  ];
+  const usedKeys = new Set();
+  let personal = "";
+  for (const re of PERSONAL_PATTERNS){
+    /* text columns only — a date column like "Pilot Lic valid until" belongs to the license list */
+    const col = sh.columns.find(c => c.type === "text" && re.test(c.label) && !usedKeys.has(c.key));
+    if (!col) continue;
+    usedKeys.add(col.key);
+    personal += "<div><b>" + esc(col.label) + ":</b>" + esc(row.c[col.key] || "—") + "</div>";
+  }
+
+  let body = "<p>" + chip(ev.worst) + "</p>" +
+    (personal ? "<h4>" + esc(t("personDetails")) + '</h4><div class="pd-other">' + personal + "</div>" : "") +
+    "<h4>" + esc(t("personLicenses")) + "</h4>";
+  if (!items.length){
+    body += "<p>" + esc(t("personNoDates")) + "</p>";
+  } else {
+    body += '<ul class="pd-list">';
+    for (const it of items){
+      body += "<li>" + chip(it.status) +
+        '<span class="pd-lic">' + esc(it.col.label) + "</span>" +
+        '<span class="pd-date">' + esc(fmtDate(it.iso)) + "</span>" +
+        '<span class="pd-days">' + esc(daysText(it.days)) + "</span></li>";
+    }
+    body += "</ul>";
+  }
+  /* non-date details + unparseable values in date columns (invalid dates flagged here too) */
+  let other = "";
+  for (const c of sh.columns){
+    if (nameKeySet.has(c.key) || usedKeys.has(c.key)) continue;
+    const v = row.c[c.key];
+    if (!v) continue;
+    if (c.type === "date" && parseDateString(v)) continue;
+    const invalid = c.type === "date" && isDateLike(v)
+      ? ' <span class="chip none">⚠ ' + esc(t("stInvalid")) + "</span>" : "";
+    other += "<div><b>" + esc(c.label) + ":</b>" + esc(v) + invalid + "</div>";
+  }
+  if (other) body += "<h4>" + esc(t("personOther")) + '</h4><div class="pd-other">' + other + "</div>";
+
+  /* per-person export: same formats as the list export, scoped to this one person */
+  const personRows = [{ row, idx, ev }];
+  const ALL_ST = ["expired", "critical", "warning", "ok"];
+  const name = rowName(row, idx);
+  body += "<h4>" + esc(t("personExports")) + "</h4>" +
+    '<div style="display:flex;flex-wrap:wrap;gap:8px">' +
+      '<button type="button" class="btn ghost" id="pdPdf">📕 ' + esc(t("expPdf")) + "</button>" +
+      '<button type="button" class="btn ghost" id="pdXlsx">📗 ' + esc(t("expXlsx")) + "</button>" +
+      '<button type="button" class="btn ghost" id="pdCsv">📄 ' + esc(t("expCsv")) + "</button>" +
+      '<button type="button" class="btn ghost" id="pdIcs">📅 ' + esc(t("expIcs")) + "</button>" +
+      '<button type="button" class="btn ghost" id="pdMail">✉️ ' + esc(t("btnMail")) + "</button>" +
+    "</div>";
+
+  openModal({
+    title: name,
+    bodyHTML: body,
+    buttons: [{ label: t("close"), kind: "ghost", onClick: () => true }],
+    onOpen: (back) => {
+      back.querySelector("#pdPdf").addEventListener("click", () => exportPDF(personRows, ALL_ST, name));
+      back.querySelector("#pdXlsx").addEventListener("click", () => exportXLSX(personRows, name));
+      back.querySelector("#pdCsv").addEventListener("click", () => exportCSV(personRows, name));
+      back.querySelector("#pdIcs").addEventListener("click", () => exportICS(personRows, ALL_ST, name));
+      back.querySelector("#pdMail").addEventListener("click", () => {
+        window.location.href = buildMailto(state.settings.mailTo, ALL_ST, personRows);
+      });
+    }
+  });
+}
+
+/* ---------- data quality report ---------- */
+function dataQualityIssues(){
+  const issues = [];
+  for (const sh of state.sheets){
+    const dCols = sh.columns.filter(c => c.type === "date");
+    const nk = nameColKeysFor(sh);
+    const seen = new Map();
+    sh.rows.forEach((row, i) => {
+      const nm = nk.map(k => String(row.c[k] || "").trim()).filter(Boolean).join(" ");
+      if (!nm){
+        issues.push({ type: "noname", tab: sh.name, person: t("noNameCol", {i: i+1}), col: "", value: "" });
+      } else {
+        const key = nm.toLowerCase().replace(/\s+/g, " ");
+        if (!seen.has(key)) seen.set(key, 0);
+        seen.set(key, seen.get(key) + 1);
+      }
+      for (const c of dCols){
+        const v = row.c[c.key];
+        if (!v) continue;
+        const s = String(v).trim();
+        if (!parseDateString(s) && isDateLike(s))
+          issues.push({ type: "invalid", tab: sh.name, person: nm || t("noNameCol", {i: i+1}), col: c.label, value: s });
+      }
+    });
+    for (const [key, n] of seen){
+      if (n > 1) issues.push({ type: "dup", tab: sh.name, person: key, col: "", value: n + "×" });
+    }
+  }
+  return issues;
+}
+function openQuality(){
+  if (!state.sheets.length){ toast(t("printHint"), "warn"); return; }
+  const issues = dataQualityIssues();
+  const groups = [
+    ["invalid", t("dqInvalid")],
+    ["dup", t("dqDupes")],
+    ["noname", t("dqNoName")]
+  ];
+  let body = "";
+  if (!issues.length){
+    body = "<p>✅ " + esc(t("dqNone")) + "</p>";
+  } else {
+    for (const [type, title] of groups){
+      const list = issues.filter(x => x.type === type);
+      if (!list.length) continue;
+      body += '<div class="dq-sec"><h4>' + esc(title) + " — " + esc(t("dqHits", {n: list.length})) + "</h4>" +
+        '<ul class="dq-list">' +
+        list.slice(0, 80).map(x =>
+          "<li><span class='t'>" + esc(x.tab) + "</span><b>" + esc(x.person) + "</b>" +
+          (x.col ? "<span>" + esc(x.col) + "</span>" : "") +
+          (x.value ? "<span>" + esc(x.value) + "</span>" : "") + "</li>").join("") +
+        (list.length > 80 ? "<li>… +" + (list.length - 80) + "</li>" : "") +
+        "</ul></div>";
+    }
+  }
+  const typeLabel = { invalid: t("dqTypeInvalid"), dup: t("dqTypeDup"), noname: t("dqTypeNoName") };
+  openModal({
+    title: t("dqTitle"),
+    bodyHTML: body,
+    buttons: [
+      { label: t("close"), kind: "ghost", onClick: () => true },
+      { label: t("dqExport"), onClick: () => {
+          const lines = [t("dqCsvHead")]
+            .concat(issues.map(x => [typeLabel[x.type], x.tab, x.person, x.col, x.value].map(csvEscape).join(";")));
+          downloadCSV(lines, "datenqualitaet-" + exportStamp() + ".csv");
+          toast(t("backupDone"));
+          return true;
+      }}
+    ]
+  });
+}
+
+/* ---------- version comparison (old file vs. currently loaded data) ---------- */
+function normName(s){ return String(s).toLowerCase().replace(/\s+/g, " ").trim(); }
+function personMapFor(sh){
+  const nk = nameColKeysFor(sh);
+  const map = new Map();
+  const dups = new Set();      // names that occur more than once — only the first row is compared
+  sh.rows.forEach((row) => {
+    const nm = nk.map(k => String(row.c[k] || "").trim()).filter(Boolean).join(" ");
+    if (!nm) return;
+    const key = normName(nm);
+    if (map.has(key)) dups.add(nm); else map.set(key, { row, name: nm });
+  });
+  return { map, dups };
+}
+function compareSheets(oldSheets){
+  const diffs = [];   // {kind, tab, person, col, oldV, newV, tag}
+  const dupNames = new Set();
+  const oldByName = new Map(oldSheets.map(s => [s.name, s]));
+  const newNames = new Set(state.sheets.map(s => s.name));
+  const onlyTabs = oldSheets.filter(s => !newNames.has(s.name)).map(s => s.name)
+    .concat(state.sheets.filter(s => !oldByName.has(s.name)).map(s => s.name));
+  for (const shNew of state.sheets){
+    const shOld = oldByName.get(shNew.name);
+    if (!shOld) continue;
+    const pNewMap = personMapFor(shNew), pOldMap = personMapFor(shOld);
+    const mNew = pNewMap.map, mOld = pOldMap.map;
+    pNewMap.dups.forEach(n => dupNames.add(n));
+    pOldMap.dups.forEach(n => dupNames.add(n));
+    for (const [key, p] of mNew) if (!mOld.has(key))
+      diffs.push({ kind: "added", tab: shNew.name, person: p.name, col: "", oldV: "", newV: "", tag: "" });
+    for (const [key, p] of mOld) if (!mNew.has(key))
+      diffs.push({ kind: "removed", tab: shNew.name, person: p.name, col: "", oldV: "", newV: "", tag: "" });
+    /* date columns matched by label */
+    const colsNew = new Map(shNew.columns.filter(c => c.type === "date").map(c => [c.label, c.key]));
+    const colsOld = new Map(shOld.columns.filter(c => c.type === "date").map(c => [c.label, c.key]));
+    for (const [key, pNew] of mNew){
+      const pOld = mOld.get(key);
+      if (!pOld) continue;
+      for (const [label, kNew] of colsNew){
+        const kOld = colsOld.get(label);
+        if (!kOld) continue;
+        const isoNew = parseDateString(pNew.row.c[kNew]);
+        const isoOld = parseDateString(pOld.row.c[kOld]);
+        if (isoNew === isoOld) continue;
+        const tag = !isoOld ? t("cmpNewVal") : !isoNew ? t("cmpGoneVal")
+                  : (isoNew > isoOld ? t("cmpExt") : t("cmpShort"));
+        diffs.push({ kind: "changed", tab: shNew.name, person: pNew.name, col: label,
+          oldV: isoOld ? fmtDate(isoOld) : "—", newV: isoNew ? fmtDate(isoNew) : "—", tag });
+      }
+    }
+  }
+  return { diffs, onlyTabs, dupNames: [...dupNames] };
+}
+function handleCompareFile(file){
+  const reader = new FileReader();
+  reader.onerror = () => toast(t("importErr", {e: "FileReader"}), "err");
+  reader.onload = (ev) => {
+    const bytes = new Uint8Array(ev.target.result);
+    const runCompare = (u8) => {
+      const oldSheets = parseWorkbookBytes(u8);
+      if (!oldSheets.length){ toast(t("importEmpty"), "warn"); return; }
+      openCompareResult(compareSheets(oldSheets), file.name);
+    };
+    try {
+      runCompare(bytes);
+    } catch(e){
+      console.error(e);
+      if (/password/i.test(e && e.message ? e.message : "")){
+        openPasswordModal(bytes, file.name, (u8) => {
+          try { runCompare(u8); }
+          catch(e2){ console.error(e2); toast(t("importErr", {e: e2 && e2.message ? e2.message : e2}), "err", 8000); }
+        });
+      } else {
+        toast(t("importErr", {e: e && e.message ? e.message : e}), "err", 8000);
+      }
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+function openCompare(){
+  if (!state.sheets.length){ toast(t("printHint"), "warn"); return; }
+  openModal({
+    title: t("cmpTitle"),
+    bodyHTML: "<p>" + esc(t("cmpBody")) + "</p>",
+    buttons: [
+      { label: t("cancel"), kind: "ghost", onClick: () => true },
+      { label: "📂 " + t("cmpPick"), onClick: () => {
+          document.getElementById("compareInput").click();
+          return true;
+      }}
+    ]
+  });
+}
+function openCompareResult(result, fileName){
+  const { diffs, onlyTabs, dupNames } = result;
+  const groups = [
+    ["added", t("cmpAdded")],
+    ["removed", t("cmpRemoved")],
+    ["changed", t("cmpChanged")]
+  ];
+  let body = "<p><strong>" + esc(fileName) + "</strong> → " + esc(t("footAsOf", {t: fmtNow()})) + "</p>";
+  if (onlyTabs.length) body += "<p>⚠ " + esc(t("cmpOnlyTabs", {t: onlyTabs.join(", ")})) + "</p>";
+  if (dupNames && dupNames.length)
+    body += "<p>⚠ " + esc(t("cmpDups", {n: dupNames.slice(0, 10).join(", ") + (dupNames.length > 10 ? " …" : "")})) + "</p>";
+  if (!diffs.length){
+    body += "<p>✅ " + esc(t("cmpNone")) + "</p>";
+  } else {
+    for (const [kind, title] of groups){
+      const list = diffs.filter(d => d.kind === kind);
+      if (!list.length) continue;
+      body += '<div class="dq-sec"><h4>' + esc(title) + " — " + esc(t("dqHits", {n: list.length})) + "</h4>" +
+        '<ul class="dq-list">' +
+        list.slice(0, 80).map(d =>
+          "<li><span class='t'>" + esc(d.tab) + "</span><b>" + esc(d.person) + "</b>" +
+          (d.col ? "<span>" + esc(d.col) + "</span>" : "") +
+          (d.kind === "changed" ? "<span>" + esc(d.oldV) + " → " + esc(d.newV) + "</span><span class='t'>" + esc(d.tag) + "</span>" : "") +
+          "</li>").join("") +
+        (list.length > 80 ? "<li>… +" + (list.length - 80) + "</li>" : "") +
+        "</ul></div>";
+    }
+  }
+  const kindLabel = { added: t("cmpAdded"), removed: t("cmpRemoved"), changed: t("cmpChanged") };
+  openModal({
+    title: t("cmpResTitle"),
+    bodyHTML: body,
+    buttons: [
+      { label: t("close"), kind: "ghost", onClick: () => true },
+      { label: t("cmpExport"), onClick: () => {
+          const lines = [t("cmpCsvHead")]
+            .concat(diffs.map(d => [kindLabel[d.kind], d.tab, d.person, d.col, d.oldV, d.newV, d.tag].map(csvEscape).join(";")));
+          downloadCSV(lines, "versionsvergleich-" + exportStamp() + ".csv");
+          toast(t("backupDone"));
+          return true;
+      }}
+    ]
+  });
+}
+
+/* ---------- modals: settings / columns / clear ---------- */
+function openSettings(){
+  const body =
+    "<p>" + esc(t("setHint")) + "</p>" +
+    '<label for="setCrit">' + esc(t("setCrit")) + "</label>" +
+    '<input type="number" id="setCrit" min="0" max="3650" value="' + esc(state.settings.critDays) + '">' +
+    '<label for="setWarn">' + esc(t("setWarn")) + "</label>" +
+    '<input type="number" id="setWarn" min="0" max="3650" value="' + esc(state.settings.warnDays) + '">';
+  openModal({
+    title: t("setTitle"), bodyHTML: body,
+    buttons: [
+      { label: t("cancel"), kind: "ghost", onClick: () => true },
+      { label: t("save"), onClick: (back) => {
+          const crit = coerceInt(back.querySelector("#setCrit").value, state.settings.critDays, 0, 3650);
+          const warn = coerceInt(back.querySelector("#setWarn").value, state.settings.warnDays, 0, 3650);
+          if (warn <= crit){ toast(t("setErr"), "err"); return false; }
+          state.settings.critDays = crit;
+          state.settings.warnDays = warn;
+          bumpEval();
+          saveState();
+          render();
+          return true;
+      }}
+    ]
+  });
+}
+function openColumns(){
+  if (!sheet().columns.length){ toast(t("printHint"), "warn"); return; }
+  let body = "<p><strong>" + esc(sheet().name) + "</strong></p><p>" + esc(t("colHint")) + "</p>";
+  for (const c of sheet().columns){
+    body += '<div class="col-row"><span class="cl">' + esc(c.label) + "</span>" +
+      '<select data-colkey="' + esc(c.key) + '">' +
+        '<option value="text"' + (c.type === "text" ? " selected" : "") + ">" + esc(t("colText")) + "</option>" +
+        '<option value="date"' + (c.type === "date" ? " selected" : "") + ">📅 " + esc(t("colDate")) + "</option>" +
+      "</select></div>";
+  }
+  openModal({
+    title: t("colTitle"), bodyHTML: body,
+    buttons: [
+      { label: t("cancel"), kind: "ghost", onClick: () => true },
+      { label: t("apply"), onClick: (back) => {
+          back.querySelectorAll("select[data-colkey]").forEach(sel => {
+            const col = sheet().columns.find(c => c.key === sel.getAttribute("data-colkey"));
+            if (col && (sel.value === "date" || sel.value === "text")){
+              col.type = sel.value;
+              /* remembered under the stable per-column key for future imports */
+              const key = col.ovKey || (sheet().name + "¦" + col.label);
+              state.settings.columnOverrides[key] = sel.value;
+            }
+          });
+          /* cap override count on write, not only on restore */
+          const ovr = state.settings.columnOverrides;
+          const keys = Object.keys(ovr);
+          if (keys.length > LIMITS.overrides)
+            for (const k of keys.slice(0, keys.length - LIMITS.overrides)) delete ovr[k];
+          bumpEval();
+          saveState();
+          render();
+          return true;
+      }}
+    ]
+  });
+}
+function openClear(){
+  const word = t("clearWord");
+  const body = "<p>" + esc(t("clearBody")) + "</p>" +
+    '<label for="clrConfirm">' + esc(t("clearType")) + "</label>" +
+    '<input type="text" id="clrConfirm" autocomplete="off">';
+  openModal({
+    title: t("clearTitle"), bodyHTML: body,
+    buttons: [
+      { label: t("cancel"), kind: "ghost", onClick: () => true },
+      { label: t("clearBtn"), kind: "danger", onClick: (back) => {
+          if (back.querySelector("#clrConfirm").value.trim().toUpperCase() !== word) return false;
+          downloadBackup(true);                    // auto-backup before destruction
+          const lang = state.settings.lang;
+          state = defaultState();
+          state.settings.lang = lang;
+          try { localStorage.removeItem(LS_LEGACY_KEY); } catch(e){ console.error(e); }
+          saveState();
+          render();
+          toast(t("cleared"));
+          return true;
+      }}
+    ]
+  });
+}
+
+/* ---------- toolbar wiring ---------- */
+document.getElementById("btnUpload").addEventListener("click", () => {
+  currentView = "upload";
+  render();
+});
+document.getElementById("fileInput").addEventListener("change", (e) => {
+  const f = e.target.files && e.target.files[0];
+  if (f) handleExcelFile(f);
+  e.target.value = "";
+});
+document.getElementById("btnBackupUp").addEventListener("click", () => document.getElementById("backupInput").click());
+document.getElementById("backupInput").addEventListener("change", (e) => {
+  const f = e.target.files && e.target.files[0];
+  if (f) handleBackupFile(f);
+  e.target.value = "";
+});
+document.getElementById("btnBackupDown").addEventListener("click", () => downloadBackup(false));
+document.getElementById("btnRefresh").addEventListener("click", () => {
+  render();
+  toast(t("refreshed", {t: fmtNow()}));
+});
+document.getElementById("btnExport").addEventListener("click", openExport);
+document.getElementById("btnMail").addEventListener("click", openMail);
+document.getElementById("btnSettings").addEventListener("click", openSettings);
+document.getElementById("btnColumns").addEventListener("click", openColumns);
+document.getElementById("btnQuality").addEventListener("click", openQuality);
+document.getElementById("btnCompare").addEventListener("click", openCompare);
+document.getElementById("compareInput").addEventListener("change", (e) => {
+  const f = e.target.files && e.target.files[0];
+  if (f) handleCompareFile(f);
+  e.target.value = "";
+});
+document.getElementById("btnClear").addEventListener("click", openClear);
+document.getElementById("btnPrint").addEventListener("click", () => {
+  if (!state.sheets.length){ toast(t("printHint"), "warn"); return; }
+  window.print();
+});
+function setLang(lang){
+  if (state.settings.lang === lang) return;
+  state.settings.lang = lang;
+  saveState();
+  applyStaticI18n();
+  render();
+  toast(t("langSwitched"));
+}
+document.getElementById("langDE").addEventListener("click", () => setLang("de"));
+document.getElementById("langEN").addEventListener("click", () => setLang("en"));
+document.getElementById("btnReload").addEventListener("click", () => {
+  if (!state.sheets.length){ location.reload(); return; }
+  openModal({
+    title: t("reloadTitle"),
+    bodyHTML: "<p>" + esc(t("reloadBody")) + "</p>",
+    buttons: [
+      { label: t("cancel"), kind: "ghost", onClick: () => true },
+      { label: "↻ " + t("reloadBtn"), onClick: () => { location.reload(); return true; } }
+    ]
+  });
+});
+
+/* whole-page drop support — only while no data is loaded or on the upload page,
+   so an accidental drop on the dashboard cannot silently replace curated data */
+window.addEventListener("dragover", (e) => e.preventDefault());
+window.addEventListener("drop", (e) => {
+  e.preventDefault();
+  const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  if (!f) return;
+  if (state.sheets.length && currentView !== "upload") return;
+  if (/\.(xlsx|xls|xlsm|xlsb|csv)$/i.test(f.name)) handleExcelFile(f);
+  else if (/\.json$/i.test(f.name)) handleBackupFile(f);
+});
+
+/* keep the reference date current even if the tab stays open past midnight */
+setInterval(() => {
+  if (renderedDay && todayISO() !== renderedDay){
+    bumpEval();
+    render();
+    toast(t("refreshed", {t: fmtNow()}));
+  }
+}, 60000);
+
+/* ---------- boot ---------- */
+loadState();          // settings only — license data always starts empty
+applyStaticI18n();
+render();
+/* update notification: the app file changed since the last visit */
+if (state.settings.lastVersion && state.settings.lastVersion !== APP_VERSION){
+  toast("🔄 " + t("updNote", {v: APP_VERSION}), "", 9000);
+}
+if (state.settings.lastVersion !== APP_VERSION){
+  state.settings.lastVersion = APP_VERSION;
+  saveState();
+}
+</script>
+</body>
+</html>
