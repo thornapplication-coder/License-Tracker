@@ -133,11 +133,27 @@
   .card > h3{font-size:14px;font-weight:800;color:var(--bl-dark);padding:12px 16px;border-bottom:1px solid var(--line);
              display:flex;align-items:center;gap:8px;background:linear-gradient(180deg,#fbfdff,#f3f7fc)}
   .card > h3 .dot{width:8px;height:8px;border-radius:50%;background:var(--bl);flex:0 0 auto}
-  .tbl-tools{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--line);
+  .tbl-tools{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line);
              background:#fbfdff}
-  .tbl-search{flex:1 1 auto;min-width:0;max-width:520px;padding:8px 11px;border:1px solid var(--line);
+  .tbl-field{padding:8px 10px;border:1px solid var(--line);border-radius:6px;font-size:13px;background:#fff;
+             color:var(--ink);max-width:220px}
+  .tbl-search{flex:1 1 220px;min-width:0;max-width:420px;padding:8px 11px;border:1px solid var(--line);
               border-radius:6px;font-size:13px;background:#fff}
-  .tbl-count{font-size:12.5px;color:var(--ink-3);white-space:nowrap;font-variant-numeric:tabular-nums}
+  .tbl-count{font-size:12.5px;color:var(--ink-3);white-space:nowrap;font-variant-numeric:tabular-nums;margin-left:auto}
+  /* column highlight dropdown (native <details>) */
+  .hl-menu{position:relative}
+  .hl-summary{list-style:none;cursor:pointer;padding:8px 12px;border:1px solid var(--bl);border-radius:6px;
+              background:#fff;color:var(--bl-dark);font-weight:700;font-size:13px;white-space:nowrap;user-select:none}
+  .hl-summary::-webkit-details-marker{display:none}
+  .hl-menu[open] .hl-summary{background:var(--bl-soft)}
+  .hl-list{position:absolute;z-index:40;top:calc(100% + 4px);left:0;min-width:200px;max-height:280px;overflow:auto;
+           background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 10px 30px rgba(9,20,40,.18);padding:6px}
+  .hl-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:5px;font-size:13px;cursor:pointer}
+  .hl-item:hover{background:var(--bl-soft)}
+  .hl-item input{width:auto}
+  /* highlighted column cells */
+  td.hl-col,th.hl-col{background:var(--st-warn-bg) !important;box-shadow:inset 2px 0 0 var(--st-warn),inset -2px 0 0 var(--st-warn)}
+  th.hl-col{color:#5b3d00}
 
   /* ---- warnings ---- */
   .warn-list{list-style:none;max-height:340px;overflow:auto}
@@ -422,7 +438,8 @@ const I18N = {
     warnMore: "… {n} weitere Einträge (Filter/Suche nutzen oder drucken für die Vollliste).",
     daysAgo: "vor {d} Tagen abgelaufen", daysToday: "läuft heute ab", daysIn: "läuft in {d} Tagen ab",
     tblTitle: "Alle Datensätze",
-    searchPh: "Suchen: Name, CPC valid until, CPC TKI valid until, Pilot Lic.Nr. …",
+    searchShort: "Suchen …", searchFieldLbl: "Suchfeld", searchFieldAll: "Alle Felder", searchName: "Name",
+    highlightBtn: "Spalten hervorheben",
     stExpired: "Abgelaufen", stCritical: "Kritisch", stWarning: "Warnung", stOk: "Gültig", stNone: "Kein Datum",
     stInvalid: "Datum ungültig",
     countOf: "{a} von {b} Zeilen",
@@ -566,7 +583,8 @@ const I18N = {
     warnMore: "… {n} more entries (use search/filters or print for the full list).",
     daysAgo: "expired {d} days ago", daysToday: "expires today", daysIn: "expires in {d} days",
     tblTitle: "All records",
-    searchPh: "Search: name, CPC valid until, CPC TKI valid until, Pilot Lic.Nr. …",
+    searchShort: "Search …", searchFieldLbl: "Search field", searchFieldAll: "All fields", searchName: "Name",
+    highlightBtn: "Highlight columns",
     stExpired: "Expired", stCritical: "Critical", stWarning: "Warning", stOk: "Valid", stNone: "No date",
     stInvalid: "invalid date",
     countOf: "{a} of {b} rows",
@@ -780,9 +798,9 @@ function sheet(){
 function defaultUI(){
   /* statuses: multi-select quick filter — defaults to "expired" so the most
      urgent entries are in focus right after upload; reset shows everything */
-  return { q:"", statuses:["expired"], sortKey:"__status", sortDir:1,
+  return { q:"", searchField:"", statuses:["expired"], sortKey:"__status", sortDir:1,
            activeOnly:false, hideLongExpired:false, tab:"dash",
-           calView:"month", calAnchor:null };
+           highlightCols:{}, calView:"month", calAnchor:null };
 }
 function toggleStatus(st){
   const i = ui.statuses.indexOf(st);
@@ -1923,6 +1941,12 @@ function filteredRows(statusOverride){
   const statuses = statusOverride !== undefined ? statusOverride : ui.statuses;
   const aKey = ui.activeOnly ? aktivColKey() : null;
   const cutoff = longExpiredCutoffISO();
+  /* search scope: "" = all columns, "__name__" = name column(s), otherwise a single column key */
+  const field = ui.searchField || "";
+  const nameSet = new Set(nameColKeys());
+  const searchCols = field === "__name__" ? sheet().columns.filter(c => nameSet.has(c.key))
+                   : field ? sheet().columns.filter(c => c.key === field)
+                   : sheet().columns;
   const out = [];
   sheet().rows.forEach((row, idx) => {
     if (ui.activeOnly && !isActiveRow(row, aKey)) return;
@@ -1931,7 +1955,7 @@ function filteredRows(statusOverride){
     if (statuses.length && !statuses.includes(ev.worst)) return;
     if (q){
       let hit = false;
-      for (const c of sheet().columns){
+      for (const c of searchCols){
         const v = row.c[c.key];
         if (!v) continue;
         if (String(v).toLowerCase().includes(q)){ hit = true; break; }
@@ -1941,7 +1965,8 @@ function filteredRows(statusOverride){
           if (iso && fmtDate(iso).toLowerCase().includes(q)){ hit = true; break; }
         }
       }
-      if (!hit && stLabel(ev.worst).toLowerCase().includes(q)) hit = true;
+      /* status-label match only makes sense in the unscoped "all fields" search */
+      if (!hit && !field && stLabel(ev.worst).toLowerCase().includes(q)) hit = true;
       if (!hit) return;
     }
     out.push({ row, idx, ev });
@@ -2118,9 +2143,23 @@ function render(){
         : isName ? "min-width:140px;max-width:140px;" : "") + '"'
     : "";
   html += '<div class="card"><h3><span class="dot"></span>' + esc(t("tblTitle")) + "</h3>";
+  const tblNameKeys = new Set(nameColKeys());
   html += '<div class="tbl-tools">' +
-    '<input type="search" id="tblSearch" class="tbl-search" placeholder="' + esc(t("searchPh")) +
-      '" value="' + esc(ui.q) + '" aria-label="' + esc(t("searchPh")) + '">' +
+    '<select id="tblSearchField" class="tbl-field" aria-label="' + esc(t("searchFieldLbl")) + '">' +
+      '<option value=""' + (ui.searchField === "" ? " selected" : "") + ">" + esc(t("searchFieldAll")) + "</option>" +
+      (tblNameKeys.size ? '<option value="__name__"' + (ui.searchField === "__name__" ? " selected" : "") + ">" + esc(t("searchName")) + "</option>" : "") +
+      visCols.filter(c => !tblNameKeys.has(c.key)).map(c =>
+        '<option value="' + esc(c.key) + '"' + (ui.searchField === c.key ? " selected" : "") + ">" + esc(c.label) + "</option>").join("") +
+    "</select>" +
+    '<input type="search" id="tblSearch" class="tbl-search" placeholder="' + esc(t("searchShort")) +
+      '" value="' + esc(ui.q) + '" aria-label="' + esc(t("searchShort")) + '">' +
+    '<details class="hl-menu">' +
+      '<summary class="hl-summary">🖍 ' + esc(t("highlightBtn")) + "</summary>" +
+      '<div class="hl-list">' +
+        visCols.map(c => '<label class="hl-item"><input type="checkbox" data-hlcol="' + esc(c.key) + '"' +
+          (ui.highlightCols[c.key] ? " checked" : "") + "> " + esc(c.label) + "</label>").join("") +
+      "</div>" +
+    "</details>" +
     '<span class="tbl-count">' + esc(t("countOf", {a: rows.length, b: personCount})) + "</span>" +
     "</div>";
   html += '<div class="table-wrap"><table class="data" id="dataTable"><thead><tr>';
@@ -2138,9 +2177,11 @@ function render(){
         '<td class="stick"' + stickStyle("__status") + ">" + chip(ev.worst) + "</td>";
       for (const c of visCols){
         const v = row.c[c.key] || "";
+        const dc = ' data-col="' + esc(c.key) + '"';
+        const hlc = ui.highlightCols[c.key] ? " hl-col" : "";
         if (nameKeySet.has(c.key)){
           /* name cell: sticky + click opens the person detail view; title shows truncated names in full */
-          html += '<td class="stick" title="' + esc(v) + '"' + stickStyle(c.key, true) + ">" +
+          html += '<td class="stick' + hlc + '"' + dc + ' title="' + esc(v) + '"' + stickStyle(c.key, true) + ">" +
             (v ? '<button type="button" class="plink" data-person="' + idx + '">' + esc(v) + "</button>" : "") + "</td>";
           continue;
         }
@@ -2150,18 +2191,18 @@ function render(){
             const st = statusForDays(daysUntil(iso));
             if (ui.hideLongExpired && st === "expired" && iso < cutoff6){
               /* long-expired entry hidden by the toggle — keep the cell but suppress the date */
-              html += '<td class="date-cell date-old" title="' + esc(t("hideOldCellTip")) + '"><span class="d-old">⋯</span></td>';
+              html += '<td class="date-cell date-old' + hlc + '"' + dc + ' title="' + esc(t("hideOldCellTip")) + '"><span class="d-old">⋯</span></td>';
             } else {
-              html += '<td class="date-cell"><span class="d">' + esc(fmtDate(iso)) + "</span>" + chip(st) + "</td>";
+              html += '<td class="date-cell' + hlc + '"' + dc + '><span class="d">' + esc(fmtDate(iso)) + "</span>" + chip(st) + "</td>";
             }
           } else if (v && isDateLike(v)){
             /* looks like a date but is not a real calendar day (e.g. 31.02.2024) — flag it */
-            html += '<td class="date-cell"><span class="d">' + esc(v) + '</span><span class="chip none">⚠ ' + esc(t("stInvalid")) + "</span></td>";
+            html += '<td class="date-cell' + hlc + '"' + dc + '><span class="d">' + esc(v) + '</span><span class="chip none">⚠ ' + esc(t("stInvalid")) + "</span></td>";
           } else {
-            html += '<td class="date-cell">' + esc(v) + "</td>";
+            html += '<td class="date-cell' + hlc + '"' + dc + ">" + esc(v) + "</td>";
           }
         } else {
-          html += "<td>" + esc(v) + "</td>";
+          html += "<td" + (hlc ? ' class="' + hlc.trim() + '"' : "") + dc + ">" + esc(v) + "</td>";
         }
       }
       html += "</tr>";
@@ -2320,7 +2361,9 @@ function thCell(key, label, stickStyleAttr){
   const active = ui.sortKey === key;
   const arrow = active ? (ui.sortDir === 1 ? "▲" : "▼") : "";
   const stick = stickStyleAttr ? ' class="stick"' + stickStyleAttr : "";
-  return '<th scope="col"' + stick + ' data-sort="' + esc(key) + '" aria-sort="' + (active ? (ui.sortDir === 1 ? "ascending" : "descending") : "none") + '">' +
+  const hl = ui.highlightCols[key] ? " hl-col" : "";
+  return '<th scope="col"' + (stick ? stick.replace('class="stick"', 'class="stick' + hl + '"') : (hl ? ' class="' + hl.trim() + '"' : "")) +
+    ' data-col="' + esc(key) + '" data-sort="' + esc(key) + '" aria-sort="' + (active ? (ui.sortDir === 1 ? "ascending" : "descending") : "none") + '">' +
     esc(label) + '<span class="arrow">' + arrow + "</span></th>";
 }
 
@@ -2406,6 +2449,21 @@ function wireDashboard(){
       }, 200);
     });
   }
+  const searchField = document.getElementById("tblSearchField");
+  if (searchField) searchField.addEventListener("change", () => {
+    ui.searchField = searchField.value;
+    render();
+    const s = document.getElementById("tblSearch"); if (s) s.focus();
+  });
+  /* column highlight: toggle live (no re-render) so the dropdown stays open while picking */
+  document.querySelectorAll("[data-hlcol]").forEach(cb => {
+    cb.addEventListener("change", () => {
+      const key = cb.getAttribute("data-hlcol");
+      if (cb.checked) ui.highlightCols[key] = true; else delete ui.highlightCols[key];
+      document.querySelectorAll('#dataTable [data-col="' + (window.CSS && CSS.escape ? CSS.escape(key) : key) + '"]')
+        .forEach(el => el.classList.toggle("hl-col", cb.checked));
+    });
+  });
   document.querySelectorAll(".stchip").forEach(chipBtn => {
     chipBtn.addEventListener("click", () => {
       toggleStatus(chipBtn.getAttribute("data-st"));
