@@ -164,6 +164,11 @@
   .sb-active .cnt{font-variant-numeric:tabular-nums;background:var(--bl-soft);color:var(--bl-dark);
                   border-radius:999px;padding:1px 8px;font-size:11.5px}
   .sb-active[aria-pressed="true"] .cnt{background:rgba(255,255,255,.28);color:#fff}
+  .sb-hideold{border-color:var(--st-serious);color:var(--st-serious)}
+  .sb-hideold:hover{background:var(--st-warn-bg)}
+  .sb-hideold[aria-pressed="true"]{background:var(--st-serious);border-color:var(--st-serious);color:#fff}
+  .sb-hideold .cnt{background:var(--st-warn-bg);color:var(--st-serious)}
+  .sb-hideold[aria-pressed="true"] .cnt{background:rgba(255,255,255,.28);color:#fff}
 
   /* ---- sticky lead columns (delete/status/name) ---- */
   table.data td.stick{position:sticky;z-index:1;background:var(--card);white-space:nowrap;
@@ -250,6 +255,8 @@
   table.data tbody tr:hover{background:var(--bl-soft)}
   td.date-cell{white-space:nowrap;font-variant-numeric:tabular-nums}
   td.date-cell .d{display:block;margin-bottom:2px}
+  td.date-old{text-align:center;color:var(--ink-2);opacity:.5}
+  td.date-old .d-old{font-size:16px;letter-spacing:2px}
   .no-rows{padding:22px 16px;color:var(--ink-2)}
 
   footer{padding:14px 22px 30px;color:var(--ink-3);font-size:12px;max-width:1500px;margin:0 auto}
@@ -451,6 +458,9 @@ const I18N = {
     refDate: "Referenzdatum (heute)",
     refDateSub: "Alle Ablauffristen werden gegen dieses tagesaktuelle Datum berechnet.",
     activeOnly: "Nur Aktive",
+    hideOld: "Länger als 6 Monate abgelaufen ausblenden",
+    hideOldTip: "Blendet nur einzelne Ablaufdaten aus, die mehr als 6 Monate zurückliegen. Andere (z. B. erst kürzlich abgelaufene) Einträge derselben Person bleiben sichtbar.",
+    hideOldCellTip: "Vor über 6 Monaten abgelaufen — ausgeblendet",
     personLicenses: "Lizenzen & Ablaufdaten", personOther: "Weitere Angaben",
     personNoDates: "Keine Datumseinträge vorhanden.",
     btnQuality: "Datenqualität",
@@ -580,6 +590,9 @@ const I18N = {
     refDate: "Reference date (today)",
     refDateSub: "All expiry deadlines are calculated against this current date.",
     activeOnly: "Active only",
+    hideOld: "Hide entries expired over 6 months",
+    hideOldTip: "Hides only individual expiry dates more than 6 months in the past. Other (e.g. recently expired) entries of the same person stay visible.",
+    hideOldCellTip: "Expired over 6 months ago — hidden",
     personLicenses: "Licenses & expiry dates", personOther: "Other details",
     personNoDates: "No date entries available.",
     btnQuality: "Data quality",
@@ -708,7 +721,7 @@ function defaultUI(){
   /* statuses: multi-select quick filter — defaults to "expired" so the most
      urgent entries are in focus right after upload; reset shows everything */
   return { q:"", statuses:["expired"], colFilters:{}, sortKey:"__status", sortDir:1,
-           compact:false, activeOnly:false, calMonth:null };
+           compact:false, activeOnly:false, hideLongExpired:false, calMonth:null };
 }
 function toggleStatus(st){
   const i = ui.statuses.indexOf(st);
@@ -958,6 +971,34 @@ function evalRow(row){
   const v = { items, worst };
   evalCache.set(row, { e: evalEpoch, v });
   return v;
+}
+
+/* ---------- "hide long-expired" toggle ---------- */
+/* ISO date exactly 6 months before today; a date entry that expired before this
+   is considered "long expired" and can be hidden via the toggle. */
+function longExpiredCutoffISO(){
+  const p = todayParts();
+  return new Date(Date.UTC(p.y, p.m - 1 - 6, p.d)).toISOString().slice(0, 10);
+}
+function isLongExpiredItem(it, cutoff){
+  return !!(cutoff && it.iso && it.status === "expired" && it.iso < cutoff);
+}
+/* Effect of the toggle on a single row's evaluation.
+   `hidden` counts entries older than 6 months (always, for the badge). When `on`,
+   those entries are stripped from the returned eval and `drop` is true only when the
+   person has NO other dated entry left — so anyone with a newer expiry stays visible. */
+function applyHideLongExpired(ev, cutoff, on){
+  let hidden = 0;
+  const kept = [];
+  for (const it of ev.items){
+    if (isLongExpiredItem(it, cutoff)){ hidden++; if (on) continue; }
+    kept.push(it);
+  }
+  if (!on || hidden === 0) return { ev, drop: false, hidden };
+  if (!kept.length) return { ev, drop: true, hidden };
+  let worst = "none";
+  for (const it of kept) if (ST_RANK[it.status] < ST_RANK[worst]) worst = it.status;
+  return { ev: { items: kept, worst }, drop: false, hidden };
 }
 
 /* ---------- Excel import ---------- */
@@ -1694,10 +1735,12 @@ function filteredRows(statusOverride){
   const q = ui.q.trim().toLowerCase();
   const statuses = statusOverride !== undefined ? statusOverride : ui.statuses;
   const aKey = ui.activeOnly ? aktivColKey() : null;
+  const cutoff = longExpiredCutoffISO();
   const out = [];
   sheet().rows.forEach((row, idx) => {
     if (ui.activeOnly && !isActiveRow(row, aKey)) return;
-    const ev = evalRow(row);
+    const { ev, drop } = applyHideLongExpired(evalRow(row), cutoff, ui.hideLongExpired);
+    if (drop) return;                                  // every expiry is > 6 months old → hide the person
     if (statuses.length && !statuses.includes(ev.worst)) return;
     for (const k in ui.colFilters){
       const want = ui.colFilters[k];
@@ -1765,11 +1808,17 @@ function render(){
   const warnings = [];
   const warnColKeys = new Set();
   const aKey = aktivColKey();
+  const cutoff6 = longExpiredCutoffISO();
+  let longExpiredCount = 0;                            // date entries older than 6 months (for the toggle badge)
   sh.rows.forEach((row, idx) => {
-    if (isActiveRow(row, aKey)) activeCount++;
-    if (ui.activeOnly && !isActiveRow(row, aKey)) return;
+    const active = isActiveRow(row, aKey);
+    if (ui.activeOnly && !active) return;
+    const res = applyHideLongExpired(evalRow(row), cutoff6, ui.hideLongExpired);
+    longExpiredCount += res.hidden;
+    if (res.drop) return;                              // person's every expiry is > 6 months old → hide
+    const ev = res.ev;
+    if (active) activeCount++;
     personCount++;
-    const ev = evalRow(row);
     counts[ev.worst]++;
     for (const it of ev.items){
       if (!it.iso) continue;
@@ -1838,6 +1887,11 @@ function render(){
       ? '<button type="button" class="sb-active" id="sbActive" aria-pressed="' + ui.activeOnly + '">👤 ' +
         esc(t("activeOnly")) + '<span class="cnt">' + activeCount + "</span></button>"
       : "") +
+    (longExpiredCount || ui.hideLongExpired
+      ? '<button type="button" class="sb-active sb-hideold" id="sbHideOld" aria-pressed="' + ui.hideLongExpired +
+        '" title="' + esc(t("hideOldTip")) + '">🕒 ' + esc(t("hideOld")) +
+        '<span class="cnt">' + longExpiredCount + "</span></button>"
+      : "") +
     chipDefs.map(([st, n]) =>
       '<button type="button" class="stchip" data-st="' + st + '" aria-pressed="' + ui.statuses.includes(st) + '">' +
       ST_ICON[st] + " " + esc(stLabel(st)) + '<span class="cnt">' + n + "</span></button>").join("") +
@@ -1905,7 +1959,12 @@ function render(){
           const iso = parseDateString(v);
           if (iso){
             const st = statusForDays(daysUntil(iso));
-            html += '<td class="date-cell"><span class="d">' + esc(fmtDate(iso)) + "</span>" + chip(st) + "</td>";
+            if (ui.hideLongExpired && st === "expired" && iso < cutoff6){
+              /* long-expired entry hidden by the toggle — keep the cell but suppress the date */
+              html += '<td class="date-cell date-old" title="' + esc(t("hideOldCellTip")) + '"><span class="d-old">⋯</span></td>';
+            } else {
+              html += '<td class="date-cell"><span class="d">' + esc(fmtDate(iso)) + "</span>" + chip(st) + "</td>";
+            }
           } else if (v && isDateLike(v)){
             /* looks like a date but is not a real calendar day (e.g. 31.02.2024) — flag it */
             html += '<td class="date-cell"><span class="d">' + esc(v) + '</span><span class="chip none">⚠ ' + esc(t("stInvalid")) + "</span></td>";
@@ -2075,6 +2134,11 @@ function wireDashboard(){
   const sbActive = document.getElementById("sbActive");
   if (sbActive) sbActive.addEventListener("click", () => {
     ui.activeOnly = !ui.activeOnly;
+    render();
+  });
+  const sbHideOld = document.getElementById("sbHideOld");
+  if (sbHideOld) sbHideOld.addEventListener("click", () => {
+    ui.hideLongExpired = !ui.hideLongExpired;
     render();
   });
   document.querySelectorAll(".plink").forEach(pl => {
