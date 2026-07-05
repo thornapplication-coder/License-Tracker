@@ -1582,8 +1582,9 @@ function mailText(statusSet, maxChars, rowsOverride){
 }
 function buildMailto(to, statusSet, rowsOverride){
   const subject = t("mailSubject", {s: sheet().name, d: fmtTodayLong()});
-  /* mailto URLs are length-limited (esp. Outlook) — cap the body, full text via copy button */
-  const body = mailText(statusSet, 1700, rowsOverride);
+  /* put the COMPLETE selected list into the draft (no truncation); some mail clients
+     have their own mailto length limits, in which case the Copy button is the fallback */
+  const body = mailText(statusSet, 0, rowsOverride);
   /* RFC 6068: multiple addresses are comma-separated and must not have their
      separators percent-encoded — encode each address individually */
   const addrs = String(to || "").split(/[;,]/).map(a => a.trim()).filter(Boolean)
