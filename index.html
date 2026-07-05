@@ -291,6 +291,10 @@
   .modal label{display:block;font-size:12.5px;font-weight:700;color:var(--ink-2);margin:10px 0 4px}
   .modal input[type=text],.modal input[type=number],.modal select{width:100%;padding:8px 10px;
         border:1px solid var(--line);border-radius:6px}
+  .set-sep{border:none;border-top:1px solid var(--line);margin:16px 0 12px}
+  .set-h{font-size:13.5px;font-weight:800;color:var(--ink);margin-bottom:4px}
+  .set-sub{font-size:12.5px;color:var(--ink-2)}
+  .set-backup{display:flex;flex-wrap:wrap;gap:9px}
   .col-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--line)}
   .col-row:last-child{border-bottom:none}
   .col-row .cl{flex:1;font-weight:600;overflow-wrap:anywhere}
@@ -325,6 +329,7 @@
   <div class="hdr-right">
     <span id="saveBadge" class="badge" role="status" aria-live="polite">●</span>
     <button id="btnReload" class="lang-btn" type="button" title="Refresh">↻</button>
+    <button id="btnSettings" class="lang-btn" type="button" title="Einstellungen" aria-label="Einstellungen">⚙️</button>
     <div class="lang-group" role="group" aria-label="DE / EN">
       <button id="langDE" class="lang-btn" type="button" aria-pressed="true">DE</button>
       <button id="langEN" class="lang-btn" type="button" aria-pressed="false">EN</button>
@@ -335,9 +340,6 @@
 <div class="toolbar" id="toolbar">
   <button class="btn" id="btnUpload" type="button">📄 <span data-i18n="btnUpload">Excel hochladen</span></button>
   <input type="file" id="fileInput" accept=".xlsx,.xls,.xlsm,.xlsb,.csv" class="sr-only">
-  <span class="tb-sep" aria-hidden="true"></span>
-  <button class="btn ghost" id="btnBackupDown" type="button">💾 <span data-i18n="btnBackupDown">Backup (JSON) herunterladen</span></button>
-  <button class="btn ghost" id="btnBackupUp" type="button">📂 <span data-i18n="btnBackupUp">Backup laden</span></button>
   <input type="file" id="backupInput" accept=".json,application/json" class="sr-only">
   <span class="tb-sep" aria-hidden="true"></span>
   <button class="btn ghost" id="btnExport" type="button">⬇️ <span data-i18n="btnExport">Exportieren</span></button>
@@ -348,7 +350,6 @@
   <button class="btn ghost" id="btnQuality" type="button">🔎 <span data-i18n="btnQuality">Datenqualität</span></button>
   <button class="btn ghost" id="btnCompare" type="button">🆚 <span data-i18n="btnCompare">Vergleich</span></button>
   <input type="file" id="compareInput" accept=".xlsx,.xls,.xlsm,.xlsb,.csv" class="sr-only">
-  <button class="btn ghost" id="btnSettings" type="button">⚙️ <span data-i18n="btnSettings">Einstellungen</span></button>
   <span class="spacer"></span>
   <button class="btn danger" id="btnClear" type="button">🗑️ <span data-i18n="btnClear">Daten löschen</span></button>
 </div>
@@ -387,6 +388,8 @@ const I18N = {
     btnBackupDown: "Backup (JSON) herunterladen", btnBackupUp: "Backup laden",
     btnColumns: "Spalten", btnSettings: "Einstellungen", btnPrint: "Drucken / PDF",
     btnClear: "Daten löschen",
+    setBackupH: "Sicherung / Backup",
+    setBackupHint: "Aktuellen Stand als JSON-Datei sichern oder eine Sicherung wiederherstellen. Es wird nur die aktuell geladene Liste in die Datei geschrieben — dauerhaft gespeichert wird nichts.",
     dzTitle: "Excel-Datei hier ablegen",
     dzText: "oder per Button auswählen (.xlsx, .xls, .csv). Kopfzeile, Namens- und Datumsspalten werden automatisch erkannt.",
     dzHint: "Alternativ kannst du ein früheres JSON-Backup wiederherstellen.",
@@ -519,6 +522,8 @@ const I18N = {
     btnBackupDown: "Download backup (JSON)", btnBackupUp: "Load backup",
     btnColumns: "Columns", btnSettings: "Settings", btnPrint: "Print / PDF",
     btnClear: "Clear data",
+    setBackupH: "Backup",
+    setBackupHint: "Save the current state as a JSON file, or restore a backup. Only the currently loaded list is written to the file — nothing is stored permanently.",
     dzTitle: "Drop your Excel file here",
     dzText: "or pick it via the button (.xlsx, .xls, .csv). Header row, name and date columns are detected automatically.",
     dzHint: "Alternatively restore a previous JSON backup.",
@@ -1731,6 +1736,8 @@ function applyStaticI18n(){
   document.getElementById("langEN").setAttribute("aria-pressed", String(state.settings.lang === "en"));
   document.getElementById("btnReload").setAttribute("title", t("reloadBtn"));
   document.getElementById("btnReload").setAttribute("aria-label", t("reloadBtn"));
+  document.getElementById("btnSettings").setAttribute("title", t("btnSettings"));
+  document.getElementById("btnSettings").setAttribute("aria-label", t("btnSettings"));
   setSaveBadge();
 }
 
@@ -2537,7 +2544,14 @@ function openSettings(){
     '<label for="setCrit">' + esc(t("setCrit")) + "</label>" +
     '<input type="number" id="setCrit" min="0" max="3650" value="' + esc(state.settings.critDays) + '">' +
     '<label for="setWarn">' + esc(t("setWarn")) + "</label>" +
-    '<input type="number" id="setWarn" min="0" max="3650" value="' + esc(state.settings.warnDays) + '">';
+    '<input type="number" id="setWarn" min="0" max="3650" value="' + esc(state.settings.warnDays) + '">' +
+    '<hr class="set-sep">' +
+    '<h4 class="set-h">' + esc(t("setBackupH")) + "</h4>" +
+    '<p class="set-sub">' + esc(t("setBackupHint")) + "</p>" +
+    '<div class="set-backup">' +
+      '<button type="button" class="btn ghost" id="setBackupDown">💾 ' + esc(t("btnBackupDown")) + "</button>" +
+      '<button type="button" class="btn ghost" id="setBackupUp">📂 ' + esc(t("btnBackupUp")) + "</button>" +
+    "</div>";
   openModal({
     title: t("setTitle"), bodyHTML: body,
     buttons: [
@@ -2553,7 +2567,14 @@ function openSettings(){
           render();
           return true;
       }}
-    ]
+    ],
+    onOpen: (back) => {
+      back.querySelector("#setBackupDown").addEventListener("click", () => downloadBackup(false));
+      back.querySelector("#setBackupUp").addEventListener("click", () => {
+        closeModal();                                   // restore replaces the data, so leave settings first
+        document.getElementById("backupInput").click();
+      });
+    }
   });
 }
 function openColumns(){
@@ -2628,13 +2649,11 @@ document.getElementById("fileInput").addEventListener("change", (e) => {
   if (f) handleExcelFile(f);
   e.target.value = "";
 });
-document.getElementById("btnBackupUp").addEventListener("click", () => document.getElementById("backupInput").click());
 document.getElementById("backupInput").addEventListener("change", (e) => {
   const f = e.target.files && e.target.files[0];
   if (f) handleBackupFile(f);
   e.target.value = "";
 });
-document.getElementById("btnBackupDown").addEventListener("click", () => downloadBackup(false));
 document.getElementById("btnExport").addEventListener("click", openExport);
 document.getElementById("btnMail").addEventListener("click", openMail);
 document.getElementById("btnSettings").addEventListener("click", openSettings);
