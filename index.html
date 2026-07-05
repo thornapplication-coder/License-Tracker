@@ -39,6 +39,7 @@
   .hdr-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
   .badge{font-size:12px;padding:4px 10px;border-radius:7px;border:1px solid rgba(255,255,255,.45);
          background:rgba(255,255,255,.12);display:inline-flex;align-items:center;gap:6px}
+  .badge.badge-store{background:var(--st-warn);border-color:var(--st-warn);color:#4a3200;font-weight:700}
   .lang-btn{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.45);color:#fff;
             border-radius:6px;padding:5px 11px;font-weight:700;font-size:12.5px}
   .lang-btn:hover{background:rgba(255,255,255,.26)}
@@ -241,6 +242,23 @@
   .cal-name.expired::before{color:var(--st-crit)}
   .cal-name.critical::before{color:var(--st-serious)}
   .cal-more{font-size:9.5px;font-weight:700;color:var(--ink-3);padding-left:11px}
+  .cal-viewsw{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .cal-viewbtn{border:none;background:#fff;color:var(--ink-2);padding:6px 13px;font-weight:700;font-size:12.5px;
+               border-right:1px solid var(--line)}
+  .cal-viewbtn:last-child{border-right:none}
+  .cal-viewbtn:hover{background:var(--bl-soft)}
+  .cal-viewbtn.active{background:var(--bl);color:#fff}
+  .cal-grid-week{grid-template-columns:repeat(7,1fr)}
+  .cal-grid-week .cal-day{min-height:180px}
+  .cal-grid-week .cal-name{font-size:11px}
+  .agenda{padding:6px 0}
+  .agenda-day{position:sticky;top:0;background:linear-gradient(180deg,#fbfdff,#eef4fb);font-weight:800;font-size:12px;
+              color:var(--bl-dark);padding:6px 16px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .agenda-row{display:grid;grid-template-columns:112px minmax(0,2fr) minmax(0,1.6fr) minmax(0,1fr);gap:0 16px;
+              align-items:center;width:100%;text-align:left;background:#fff;border:none;border-bottom:1px solid var(--line);
+              padding:8px 16px;font-size:13.5px;cursor:pointer}
+  .agenda-row:hover{background:var(--bl-soft)}
+  .agenda-row > .chip{justify-self:start}
 
   /* ---- status chips: color + icon + text, never color alone ---- */
   .chip{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:7px;font-size:11.5px;
@@ -310,6 +328,11 @@
   .set-h{font-size:13.5px;font-weight:800;color:var(--ink);margin-bottom:4px}
   .set-sub{font-size:12.5px;color:var(--ink-2)}
   .set-backup{display:flex;flex-wrap:wrap;gap:9px}
+  .set-check{display:flex;align-items:center;gap:9px;font-weight:700;color:var(--ink);cursor:pointer;margin:2px 0 6px}
+  .set-check input{width:auto}
+  .set-warn{border-left:3px solid var(--st-warn);background:var(--st-warn-bg);padding:8px 10px;border-radius:0 6px 6px 0;
+            color:#5b3d00;margin-bottom:10px}
+  .meta.meta-store{color:#8a5a00;font-weight:700}
   .col-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--line)}
   .col-row:last-child{border-bottom:none}
   .col-row .cl{flex:1;font-weight:600;overflow-wrap:anywhere}
@@ -393,8 +416,11 @@ const I18N = {
     reloadBody: "Beim Neuladen werden die geladenen Daten verworfen (es wird nichts gespeichert). Danach bitte die aktuelle Excel-Liste wieder hochladen.",
     reloadBtn: "Neu laden",
     updNote: "Update installiert — die App läuft jetzt in Version {v}.",
-    calTitle: "Monatskalender — Abgelaufen & Kritisch",
+    calTitle: "Kalender — Abgelaufen & Kritisch",
     calToday: "Heute", calPrev: "Voriger Monat", calNext: "Nächster Monat",
+    calBack: "Zurück", calFwd: "Weiter",
+    calMonthView: "Monat", calWeekView: "Woche", calAgendaView: "Agenda",
+    calAgendaTitle: "Alle Termine (chronologisch)", calAgendaEmpty: "Keine anstehenden Termine.",
     calIcs: "In eigenen Kalender exportieren (.ics)",
     calDayEntries: "Fällige Lizenzen am {d}",
     personDetails: "Personal Details",
@@ -515,6 +541,14 @@ const I18N = {
     personExports: "Exportieren:",
     noStore: "Keine Datenspeicherung",
     noStoreLong: "Reiner Converter: Es werden keine Lizenzdaten gespeichert. Beim Schließen oder Neuladen der Seite ist alles weg — einfach immer die aktuelle Excel-Liste hochladen.",
+    storeOn: "Lokal gespeichert",
+    storeOnLong: "ACHTUNG: Lokales Speichern ist aktiv — die geladene Liste bleibt in diesem Browser (unverschlüsselt, nur auf diesem Gerät) und ist auch nach dem Neuladen noch da. In den Einstellungen abschaltbar/löschbar.",
+    persistQuota: "Speichern fehlgeschlagen — die Liste ist zu groß für den lokalen Browser-Speicher. Bitte „Lokal speichern\" deaktivieren.",
+    setStoreH: "Lokale Speicherung (Standard: AUS)",
+    setStoreLabel: "Geladene Liste in diesem Browser speichern",
+    setStoreHint: "Standardmäßig wird nichts gespeichert — beim Neuladen ist alles weg (Datenschutz). Aktiviert bleibt die zuletzt geladene Liste unverschlüsselt in genau diesem Browser/Gerät erhalten. Nur auf einem privaten, vertrauenswürdigen Gerät verwenden.",
+    setStoreClear: "Gespeicherte Daten jetzt löschen",
+    storeCleared: "Lokal gespeicherte Daten gelöscht.",
     expWhich: "Welche Status exportieren?",
     expCount: "{n} Zeile(n) im Export.",
     langSwitched: "Sprache auf Deutsch umgestellt.",
@@ -528,8 +562,11 @@ const I18N = {
     reloadBody: "Reloading discards the loaded data (nothing is stored). Please upload the current Excel list again afterwards.",
     reloadBtn: "Reload",
     updNote: "Update installed — the app is now running version {v}.",
-    calTitle: "Month calendar — expired & critical",
+    calTitle: "Calendar — expired & critical",
     calToday: "Today", calPrev: "Previous month", calNext: "Next month",
+    calBack: "Back", calFwd: "Forward",
+    calMonthView: "Month", calWeekView: "Week", calAgendaView: "Agenda",
+    calAgendaTitle: "All entries (chronological)", calAgendaEmpty: "No upcoming entries.",
     calIcs: "Export to your own calendar (.ics)",
     calDayEntries: "Licenses due on {d}",
     personDetails: "Personal Details",
@@ -650,6 +687,14 @@ const I18N = {
     personExports: "Export:",
     noStore: "No data stored",
     noStoreLong: "Pure converter: no license data is stored. Closing or reloading the page discards everything — just upload the current Excel list each time.",
+    storeOn: "Stored locally",
+    storeOnLong: "NOTE: Local storage is ON — the loaded list stays in this browser (unencrypted, this device only) and survives a reload. Can be turned off / cleared in the settings.",
+    persistQuota: "Save failed — the list is too large for the browser's local storage. Please turn off \"Store locally\".",
+    setStoreH: "Local storage (default: OFF)",
+    setStoreLabel: "Store the loaded list in this browser",
+    setStoreHint: "By default nothing is stored — reloading discards everything (privacy). When enabled, the last loaded list is kept unencrypted in exactly this browser/device. Use only on a private, trusted device.",
+    setStoreClear: "Delete stored data now",
+    storeCleared: "Locally stored data deleted.",
     expWhich: "Which statuses to export?",
     expCount: "{n} row(s) in the export.",
     langSwitched: "Language switched to English.",
@@ -739,6 +784,7 @@ const DEFAULT_MAILTO = "Pilotadmin@aviationacademy.at; Claudia.lautner@aviationa
 /* Pure converter: license DATA is never stored — only user settings persist.
    Every session starts empty; the current Excel list must be uploaded fresh. */
 const LS_SETTINGS_KEY = "ew-ilc-settings-v1";
+const LS_DATA_KEY = "ew-ilc-data-v1";                         // only written when persistData is opted in
 const LS_LEGACY_KEY = "ew-instructor-license-dashboard-v1";   // old full-state key: wiped on boot
 const LIMITS = { rows: 20000, cols: 200, cell: 4000, label: 300, overrides: 600, sheets: 20, backupBytes: 15*1024*1024 };
 
@@ -748,7 +794,7 @@ function defaultState(){
     meta: { fileName: "", importedAt: "" },
     sheets: [],           // [{name, columns:[{key,label,type:'text'|'date'}], rows:[{c:{key:string}}]}]
     active: 0,            // index of the sheet currently shown
-    settings: { lang: "de", critDays: 30, warnDays: 90, hideMonths: 6, columnOverrides: {},
+    settings: { lang: "de", critDays: 30, warnDays: 90, hideMonths: 6, persistData: false, columnOverrides: {},
                 mailTo: DEFAULT_MAILTO, lastVersion: "" }
   };
 }
@@ -760,7 +806,8 @@ function defaultUI(){
   /* statuses: multi-select quick filter — defaults to "expired" so the most
      urgent entries are in focus right after upload; reset shows everything */
   return { q:"", statuses:["expired"], colFilters:{}, sortKey:"__status", sortDir:1,
-           compact:false, activeOnly:false, hideLongExpired:false, tab:"dash", calMonth:null };
+           compact:false, activeOnly:false, hideLongExpired:false, tab:"dash",
+           calView:"month", calAnchor:null };
 }
 function toggleStatus(st){
   const i = ui.statuses.indexOf(st);
@@ -770,7 +817,9 @@ let ui = defaultUI();
 let currentView = "dash";        // 'dash' | 'upload' — upload is forced while no data exists
 let renderedDay = "";            // ISO day the view was last rendered for (midnight rollover watch)
 
-/* ---------- storage: SETTINGS ONLY — license data is never persisted ---------- */
+/* ---------- storage ----------
+   Settings always persist. License DATA is persisted ONLY when the user opts in
+   via settings.persistData (default off) — see saveState()/loadState(). */
 function loadState(){
   try {
     /* wipe any data stored by older versions of this app */
@@ -788,23 +837,46 @@ function loadState(){
       const s = sanitizeState({ settings: JSON.parse(raw) });   // reuse whitelist/coerce path
       state.settings = s.settings;
     }
-  } catch(e){ console.error("settings read failed", e); }
+    /* opt-in only: restore the last saved list if the user enabled local storage */
+    if (state.settings.persistData){
+      const data = localStorage.getItem(LS_DATA_KEY);
+      if (data){
+        try {
+          const parsed = JSON.parse(data);
+          const next = sanitizeState({ ...parsed, settings: state.settings });   // keep loaded settings
+          state.sheets = next.sheets;
+          state.meta = next.meta;
+          state.active = next.active;
+          if (state.sheets.length) currentView = "dash";
+        } catch(e){ console.error("stored data unreadable", e); localStorage.removeItem(LS_DATA_KEY); }
+      }
+    } else {
+      localStorage.removeItem(LS_DATA_KEY);   // make sure nothing lingers when the option is off
+    }
+  } catch(e){ console.error("state read failed", e); }
 }
 function saveState(){
-  /* data stays in memory only; persist just the settings */
   try {
     localStorage.setItem(LS_SETTINGS_KEY, JSON.stringify(state.settings));
+    if (state.settings.persistData){
+      const data = JSON.stringify({ schemaVersion: state.schemaVersion, meta: state.meta, active: state.active, sheets: state.sheets });
+      localStorage.setItem(LS_DATA_KEY, data);
+    } else {
+      localStorage.removeItem(LS_DATA_KEY);   // opt-out clears any previously stored data immediately
+    }
     return true;
   } catch(e){
-    console.error("settings write failed", e);
-    toast(t("saveErr"), "err");        // honest feedback — never swallow storage failures
+    console.error("state write failed", e);
+    /* most likely the quota was exceeded by the license data */
+    toast(state.settings.persistData ? t("persistQuota") : t("saveErr"), "err", 8000);
     return false;
   }
 }
 function setSaveBadge(){
   const b = document.getElementById("saveBadge");
-  b.className = "badge";
-  b.textContent = "🔒 " + t("noStore");
+  const on = state.settings.persistData;
+  b.className = "badge" + (on ? " badge-store" : "");
+  b.textContent = (on ? "💾 " : "🔒 ") + t(on ? "storeOn" : "noStore");
 }
 
 /* ---------- schema validation (whitelist + coerce + cap) ---------- */
@@ -878,6 +950,7 @@ function sanitizeState(o){
   s.settings.warnDays = coerceInt(set.warnDays, 90, 0, 3650);
   if (s.settings.warnDays <= s.settings.critDays) s.settings.warnDays = s.settings.critDays + 1;
   s.settings.hideMonths = coerceInt(set.hideMonths, 6, 1, 120);
+  s.settings.persistData = set.persistData === true;    // opt-in only; anything else = off
   s.settings.columnOverrides = {};
   if (typeof set.columnOverrides === "object" && set.columnOverrides){
     let n = 0;
@@ -1340,33 +1413,53 @@ function downloadBlob(blob, name){
   a.click();
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 800);
 }
+/* traffic-light fills/fonts for the Excel export (mirror the on-screen status colours) */
+const XLSX_FILL = { expired:"FBE3E3", critical:"FDEAE2", warning:"FDF3D9", ok:"E7F6E7", none:"EEF1F5" };
+const XLSX_FONT = { expired:"8F1F1F", critical:"993A17", warning:"7A5200", ok:"086108", none:"4A5568" };
+/* colored .xlsx via xlsx-populate (the plain SheetJS build cannot write cell fills) */
 function exportXLSX(rows, suffix){
   const cols = sheet().columns;
-  const aoa = [[t("colStatus")].concat(cols.map(c => c.label))];
-  for (const { row, ev } of rows){
-    const line = [stLabel(ev.worst)];
-    for (const c of cols){
-      const v = row.c[c.key] || "";
-      if (c.type === "date"){
-        const iso = parseDateString(v);
-        if (iso){
-          const p = iso.split("-");
-          line.push(new Date(Date.UTC(+p[0], +p[1]-1, +p[2])));   // real date cell, not text
-          continue;
-        }
-      }
-      line.push(v);
-    }
-    aoa.push(line);
-  }
-  const ws = XLSX.utils.aoa_to_sheet(aoa, { cellDates: true });
-  ws["!cols"] = [{ wch: 12 }].concat(cols.map(c => ({ wch: Math.min(28, Math.max(11, c.label.length + 2)) })));
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, sheet().name.replace(/[\\\/\?\*\[\]:]/g, " ").slice(0, 31) || "Export");
+  const sheetName = (sheet().name || "Export").replace(/[\\\/\?\*\[\]:]/g, " ").slice(0, 31) || "Export";
   const name = exportBaseName(suffix) + ".xlsx";
-  const out = XLSX.write(wb, { type: "array", bookType: "xlsx", cellDates: true });
-  downloadBlob(new Blob([out], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), name);
-  toast(t("expDone", {f: name}));
+  loadXlsxPopulate()
+    .then(() => window.XlsxPopulate.fromBlankAsync())
+    .then(wb => {
+      const ws = wb.sheet(0);
+      ws.name(sheetName);
+      const headers = [t("colStatus")].concat(cols.map(c => c.label));
+      headers.forEach((h, ci) => ws.row(1).cell(ci + 1).value(h)
+        .style({ bold: true, fontColor: "FFFFFF", fill: "1F3F77" }));
+      rows.forEach(({ row, ev }, ri) => {
+        const r = ri + 2;
+        ws.row(r).cell(1).value(stLabel(ev.worst))
+          .style({ bold: true, fill: XLSX_FILL[ev.worst] || XLSX_FILL.none, fontColor: XLSX_FONT[ev.worst] || XLSX_FONT.none });
+        cols.forEach((c, ci) => {
+          const cell = ws.row(r).cell(ci + 2);
+          const v = row.c[c.key] || "";
+          if (c.type === "date"){
+            const iso = parseDateString(v);
+            if (iso){
+              const p = iso.split("-");
+              const st = statusForDays(daysUntil(iso));
+              cell.value(new Date(Date.UTC(+p[0], +p[1]-1, +p[2])))
+                .style({ numberFormat: "dd.mm.yyyy", fill: XLSX_FILL[st] || XLSX_FILL.none, fontColor: XLSX_FONT[st] || XLSX_FONT.none });
+              return;
+            }
+          }
+          cell.value(String(v));
+        });
+      });
+      ws.column(1).width(14);
+      cols.forEach((c, ci) => ws.column(ci + 2).width(Math.min(28, Math.max(12, c.label.length + 2))));
+      try { ws.freezePanes(0, 1); } catch(e){ /* older build: no-op */ }
+      return wb.outputAsync("blob");
+    })
+    .then(blob => {
+      downloadBlob(blob instanceof Blob ? blob : new Blob([blob],
+        { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), name);
+      toast(t("expDone", {f: name}));
+    })
+    .catch(e => { console.error(e); toast(t("backupErr", {e: e && e.message ? e.message : e}), "err", 7000); });
 }
 function exportCSV(rows, suffix){
   const cols = sheet().columns;
@@ -1996,7 +2089,7 @@ function render(){
     "</div>";
 
   if (ui.tab === "cal"){
-    if (!ui.calMonth) ui.calMonth = todayISO().slice(0, 7);
+    if (!ui.calAnchor) ui.calAnchor = todayISO();
     html += renderCalendar(calItemsByDay());
   } else {
 
@@ -2130,52 +2223,115 @@ function calItemsByDay(){
   }
   return byDay;
 }
-function renderCalendar(byDay){
-  const ym = ui.calMonth;
+function isoAddDays(iso, n){ const p = iso.split("-"); return new Date(Date.UTC(+p[0], +p[1]-1, +p[2]+n)).toISOString().slice(0,10); }
+function isoAddMonths(iso, n){ const p = iso.split("-"); return new Date(Date.UTC(+p[0], +p[1]-1+n, +p[2])).toISOString().slice(0,10); }
+function isoDow(iso){ const p = iso.split("-"); return (new Date(Date.UTC(+p[0], +p[1]-1, +p[2])).getUTCDay() + 6) % 7; }  // Mon=0
+
+/* one day cell (shared by month + week grids) */
+function calDayCell(iso, dnum, nameCap){
+  const tISO = todayISO();
+  const byDay = calDayCell._byDay;
+  const entries = byDay.get(iso);
+  const cls = "cal-day" + (iso === tISO ? " today" : "") + (entries ? " has" : "");
+  if (!entries) return '<div class="' + cls + '"><span class="dnum">' + dnum + "</span></div>";
+  const ordered = entries.slice().sort((a, b) => ST_RANK[a.status] - ST_RANK[b.status]);
+  const cap = nameCap || 4;
+  const names = ordered.slice(0, cap).map(e =>
+    '<span class="cal-name ' + e.status + '" title="' + esc(e.name + " — " + e.lic + " (" + fmtDate(e.iso) + ")") + '">' +
+    esc(e.name) + "</span>").join("");
+  const rest = ordered.length - Math.min(ordered.length, cap);
+  return '<button type="button" class="' + cls + '" data-calday="' + iso + '" aria-label="' +
+    esc(t("calDayEntries", {d: fmtDate(iso)})) + '"><span class="dnum">' + dnum + "</span>" +
+    '<div class="cal-names">' + names + (rest > 0 ? '<span class="cal-more">+' + rest + "</span>" : "") +
+    "</div></button>";
+}
+
+function renderCalMonth(byDay){
+  const ym = ui.calAnchor.slice(0, 7);
   const y = +ym.slice(0, 4), m = +ym.slice(5, 7);
-  const monthFmt = cachedFmt("cal", { month: "long", year: "numeric", timeZone: "UTC" });
-  const label = monthFmt ? monthFmt.format(new Date(Date.UTC(y, m-1, 1))) : ym;
-  const firstDow = (new Date(Date.UTC(y, m-1, 1)).getUTCDay() + 6) % 7;   // Monday = 0
+  const firstDow = (new Date(Date.UTC(y, m-1, 1)).getUTCDay() + 6) % 7;
   const dim = new Date(Date.UTC(y, m, 0)).getUTCDate();
   const wdFmt = cachedFmt("wd", { weekday: "short", timeZone: "UTC" });
   let cells = "";
-  for (let i = 0; i < 7; i++){
-    const wd = wdFmt ? wdFmt.format(new Date(Date.UTC(2024, 0, 1 + i))) : String(i);  // 2024-01-01 is a Monday
-    cells += '<div class="cal-wd">' + esc(wd) + "</div>";
-  }
+  for (let i = 0; i < 7; i++)
+    cells += '<div class="cal-wd">' + esc(wdFmt ? wdFmt.format(new Date(Date.UTC(2024, 0, 1 + i))) : i) + "</div>";
   for (let i = 0; i < firstDow; i++) cells += '<div class="cal-day empty"></div>';
-  const tISO = todayISO();
-  for (let d = 1; d <= dim; d++){
-    const iso = ym + "-" + pad2(d);
-    const entries = byDay.get(iso);
-    const cls = "cal-day" + (iso === tISO ? " today" : "") + (entries ? " has" : "");
-    if (!entries){
-      cells += '<div class="' + cls + '"><span class="dnum">' + d + "</span></div>";
-      continue;
-    }
-    /* show the affected names (not just a count) — expired first, then critical */
-    const ordered = entries.slice().sort((a, b) => ST_RANK[a.status] - ST_RANK[b.status]);
-    const NAME_CAP = 4;
-    const names = ordered.slice(0, NAME_CAP).map(e =>
-      '<span class="cal-name ' + e.status + '" title="' + esc(e.name + " — " + e.lic + " (" + fmtDate(e.iso) + ")") + '">' +
-      esc(e.name) + "</span>").join("");
-    const rest = ordered.length - Math.min(ordered.length, NAME_CAP);
-    cells += '<button type="button" class="' + cls + '" data-calday="' + iso + '" aria-label="' +
-      esc(t("calDayEntries", {d: fmtDate(iso)})) + '"><span class="dnum">' + d + "</span>" +
-      '<div class="cal-names">' + names +
-      (rest > 0 ? '<span class="cal-more">+' + rest + "</span>" : "") +
-      "</div></button>";
+  for (let d = 1; d <= dim; d++) cells += calDayCell(ym + "-" + pad2(d), d, 4);
+  return '<div class="cal-grid">' + cells + "</div>";
+}
+
+function renderCalWeek(byDay){
+  const monday = isoAddDays(ui.calAnchor, -isoDow(ui.calAnchor));
+  const wdFmt = cachedFmt("wd", { weekday: "short", timeZone: "UTC" });
+  let cells = "";
+  for (let i = 0; i < 7; i++)
+    cells += '<div class="cal-wd">' + esc(wdFmt ? wdFmt.format(new Date(Date.UTC(2024, 0, 1 + i))) : i) + "</div>";
+  for (let i = 0; i < 7; i++){
+    const iso = isoAddDays(monday, i);
+    cells += calDayCell(iso, +iso.slice(8, 10), 20);        // week cells are tall — show more names
   }
+  return '<div class="cal-grid cal-grid-week">' + cells + "</div>";
+}
+
+function renderCalAgenda(byDay){
+  /* flat chronological list of every expiring/expired entry */
+  const all = [];
+  for (const [, list] of byDay) for (const it of list) all.push(it);
+  all.sort((a, b) => a.iso < b.iso ? -1 : a.iso > b.iso ? 1 : ST_RANK[a.status] - ST_RANK[b.status]);
+  if (!all.length) return '<div class="warn-empty">✅ ' + esc(t("calAgendaEmpty")) + "</div>";
+  const tISO = todayISO();
+  let last = "";
+  let html = '<div class="agenda">';
+  for (const it of all){
+    if (it.iso !== last){
+      last = it.iso;
+      const rel = it.iso === tISO ? " · " + t("calToday") : "";
+      html += '<div class="agenda-day">' + esc(fmtDate(it.iso)) + esc(rel) + "</div>";
+    }
+    html += '<button type="button" class="agenda-row" data-calday="' + it.iso + '">' +
+      chip(it.status) +
+      '<span class="w-name" title="' + esc(it.name) + '">' + esc(it.name) + "</span>" +
+      '<span class="w-lic" title="' + esc(it.lic) + '">' + esc(it.lic) + "</span>" +
+      '<span class="w-days">' + esc(daysText(it.days)) + "</span></button>";
+  }
+  return html + "</div>";
+}
+
+function renderCalendar(byDay){
+  calDayCell._byDay = byDay;
+  const view = ui.calView || "month";
+  /* header label depends on the view */
+  let label;
+  if (view === "week"){
+    const monday = isoAddDays(ui.calAnchor, -isoDow(ui.calAnchor));
+    const sunday = isoAddDays(monday, 6);
+    label = fmtDate(monday) + " – " + fmtDate(sunday);
+  } else if (view === "agenda"){
+    label = t("calAgendaTitle");
+  } else {
+    const p = ui.calAnchor.split("-");
+    const monthFmt = cachedFmt("cal", { month: "long", year: "numeric", timeZone: "UTC" });
+    label = monthFmt ? monthFmt.format(new Date(Date.UTC(+p[0], +p[1]-1, 1))) : ui.calAnchor.slice(0, 7);
+  }
+  const viewBtn = (v, lbl) => '<button type="button" class="cal-viewbtn' + (view === v ? " active" : "") +
+    '" data-calview="' + v + '">' + esc(lbl) + "</button>";
+  const body = view === "week" ? renderCalWeek(byDay)
+             : view === "agenda" ? renderCalAgenda(byDay)
+             : renderCalMonth(byDay);
   return '<div class="card cal-card"><h3><span class="dot"></span>' + esc(t("calTitle")) + "</h3>" +
     '<div class="cal-head">' +
-      '<button class="btn ghost" id="calPrev" type="button" aria-label="' + esc(t("calPrev")) + '">‹</button>' +
-      '<span class="cal-month">' + esc(label) + "</span>" +
-      '<button class="btn ghost" id="calNext" type="button" aria-label="' + esc(t("calNext")) + '">›</button>' +
-      '<button class="btn ghost" id="calToday" type="button">' + esc(t("calToday")) + "</button>" +
+      '<div class="cal-viewsw" role="tablist">' +
+        viewBtn("month", t("calMonthView")) + viewBtn("week", t("calWeekView")) + viewBtn("agenda", t("calAgendaView")) +
+      "</div>" +
+      (view !== "agenda"
+        ? '<button class="btn ghost" id="calPrev" type="button" aria-label="' + esc(t("calBack")) + '">‹</button>' +
+          '<span class="cal-month">' + esc(label) + "</span>" +
+          '<button class="btn ghost" id="calNext" type="button" aria-label="' + esc(t("calFwd")) + '">›</button>' +
+          '<button class="btn ghost" id="calToday" type="button">' + esc(t("calToday")) + "</button>"
+        : '<span class="cal-month">' + esc(label) + "</span>") +
       '<span class="spacer"></span>' +
       '<button class="btn" id="calIcs" type="button">📅 ' + esc(t("calIcs")) + "</button>" +
-    "</div>" +
-    '<div class="cal-grid">' + cells + "</div></div>";
+    "</div>" + body + "</div>";
 }
 function openCalDay(iso){
   const entries = (calItemsByDay().get(iso) || []);
@@ -2218,7 +2374,7 @@ function renderUpload(){
       "<h2>" + esc(t("dzTitle")) + "</h2>" +
       "<p>" + esc(t("dzText")) + "</p>" +
       "<p>" + esc(t("dzHint")) + "</p>" +
-      "<p>🔒 " + esc(t("noStoreLong")) + "</p>" +
+      "<p>" + (state.settings.persistData ? "💾 " : "🔒 ") + esc(state.settings.persistData ? t("storeOnLong") : t("noStoreLong")) + "</p>" +
       (hasData ? "<p><strong>⚠ " + esc(t("upHasData", {n: totalRows})) + "</strong></p>" : "") +
       '<div class="dz-actions">' +
         '<button class="btn" id="dzPick" type="button">📄 ' + esc(t("dzBtn")) + "</button>" +
@@ -2239,7 +2395,9 @@ function renderFooter(){
   } else {
     html += '<div class="meta">' + esc(t("footNoFile")) + "</div>";
   }
-  html += '<div class="meta">🔒 ' + esc(t("noStoreLong")) + "</div>";
+  html += '<div class="meta' + (state.settings.persistData ? " meta-store" : "") + '">' +
+    (state.settings.persistData ? "💾 " : "🔒 ") +
+    esc(state.settings.persistData ? t("storeOnLong") : t("noStoreLong")) + "</div>";
   html += '<div class="meta"><b>' + esc(COPYRIGHT) + "</b> · Version " + esc(APP_VERSION) + "</div>";
   f.innerHTML = html;
 }
@@ -2307,36 +2465,44 @@ function wireDashboard(){
   document.querySelectorAll(".plink").forEach(pl => {
     pl.addEventListener("click", () => openPerson(parseInt(pl.getAttribute("data-person"), 10)));
   });
-  /* month calendar */
+  /* calendar (month / week / agenda) */
   const refocus = (id) => {           // render() rebuilds #main — keep keyboard focus on the button
     const el = document.getElementById(id);
     if (el) el.focus();
   };
-  const shiftMonth = (delta, focusId) => {
-    const y = +ui.calMonth.slice(0, 4), m = +ui.calMonth.slice(5, 7) - 1 + delta;
-    const d = new Date(Date.UTC(y, m, 1));
-    ui.calMonth = d.getUTCFullYear() + "-" + pad2(d.getUTCMonth() + 1);
+  document.querySelectorAll("[data-calview]").forEach(vb => {
+    vb.addEventListener("click", () => {
+      const v = vb.getAttribute("data-calview");
+      if (ui.calView === v) return;
+      ui.calView = v;
+      render();
+    });
+  });
+  const shiftCal = (dir, focusId) => {   // month view steps by month, week view by 7 days
+    if (!ui.calAnchor) ui.calAnchor = todayISO();
+    ui.calAnchor = ui.calView === "week" ? isoAddDays(ui.calAnchor, dir * 7) : isoAddMonths(ui.calAnchor, dir);
     render();
     refocus(focusId);
   };
   const calPrev = document.getElementById("calPrev");
   if (calPrev){
-    calPrev.addEventListener("click", () => shiftMonth(-1, "calPrev"));
-    document.getElementById("calNext").addEventListener("click", () => shiftMonth(1, "calNext"));
+    calPrev.addEventListener("click", () => shiftCal(-1, "calPrev"));
+    document.getElementById("calNext").addEventListener("click", () => shiftCal(1, "calNext"));
     document.getElementById("calToday").addEventListener("click", () => {
-      ui.calMonth = todayISO().slice(0, 7);
+      ui.calAnchor = todayISO();
       render();
       refocus("calToday");
     });
-    document.getElementById("calIcs").addEventListener("click", () => {
-      const rows = filteredRows([]);
-      if (!rows.length){ toast(t("expNoRows"), "warn"); return; }
-      exportICS(rows, ["expired", "critical"], "kalender");
-    });
-    document.querySelectorAll("[data-calday]").forEach(cd => {
-      cd.addEventListener("click", () => openCalDay(cd.getAttribute("data-calday")));
-    });
   }
+  const calIcs = document.getElementById("calIcs");
+  if (calIcs) calIcs.addEventListener("click", () => {
+    const rows = filteredRows([]);
+    if (!rows.length){ toast(t("expNoRows"), "warn"); return; }
+    exportICS(rows, ["expired", "critical"], "kalender");
+  });
+  document.querySelectorAll("[data-calday]").forEach(cd => {
+    cd.addEventListener("click", () => openCalDay(cd.getAttribute("data-calday")));
+  });
   document.querySelectorAll(".sheet-tab").forEach(tab => {
     tab.addEventListener("click", () => {
       const i = parseInt(tab.getAttribute("data-sheet"), 10);
@@ -2701,6 +2867,12 @@ function openSettings(){
     '<label for="setHideMonths">' + esc(t("setHideMonths")) + "</label>" +
     '<input type="number" id="setHideMonths" min="1" max="120" value="' + esc(hideMonths()) + '">' +
     '<hr class="set-sep">' +
+    '<h4 class="set-h">' + esc(t("setStoreH")) + "</h4>" +
+    '<label class="set-check"><input type="checkbox" id="setPersist"' + (state.settings.persistData ? " checked" : "") + "> " +
+      esc(t("setStoreLabel")) + "</label>" +
+    '<p class="set-sub set-warn">' + esc(t("setStoreHint")) + "</p>" +
+    '<button type="button" class="btn ghost" id="setStoreClear">🧹 ' + esc(t("setStoreClear")) + "</button>" +
+    '<hr class="set-sep">' +
     '<h4 class="set-h">' + esc(t("setBackupH")) + "</h4>" +
     '<p class="set-sub">' + esc(t("setBackupHint")) + "</p>" +
     '<div class="set-backup">' +
@@ -2718,13 +2890,23 @@ function openSettings(){
           state.settings.critDays = crit;
           state.settings.warnDays = warn;
           state.settings.hideMonths = coerceInt(back.querySelector("#setHideMonths").value, hideMonths(), 1, 120);
+          state.settings.persistData = back.querySelector("#setPersist").checked;
           bumpEval();
-          saveState();
+          saveState();          // writes or clears the stored list depending on persistData
+          setSaveBadge();       // header badge reflects the new storage mode
           render();
           return true;
       }}
     ],
     onOpen: (back) => {
+      back.querySelector("#setStoreClear").addEventListener("click", () => {
+        back.querySelector("#setPersist").checked = false;
+        state.settings.persistData = false;
+        saveState();            // removes LS_DATA_KEY
+        setSaveBadge();
+        renderFooter();
+        toast(t("storeCleared"));
+      });
       back.querySelector("#setBackupDown").addEventListener("click", () => downloadBackup(false));
       back.querySelector("#setBackupUp").addEventListener("click", () => {
         closeModal();                                   // restore replaces the data, so leave settings first
@@ -2866,7 +3048,7 @@ setInterval(() => {
 }, 60000);
 
 /* ---------- boot ---------- */
-loadState();          // settings only — license data always starts empty
+loadState();          // settings always; license data only if the user opted into local storage
 applyStaticI18n();
 render();
 /* update notification: the app file changed since the last visit */
