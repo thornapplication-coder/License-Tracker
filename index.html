@@ -67,6 +67,11 @@
   .sheet-tab:hover{background:var(--bl-soft);color:var(--bl-dark)}
   .sheet-tab.active{background:var(--bl-dark);border-color:var(--bl-dark);color:#fff}
   .sheet-tab .n{font-weight:400;opacity:.8;font-size:11.5px;margin-left:5px}
+  .view-tabs{display:flex;gap:4px;margin:0 0 16px;border-bottom:2px solid var(--line)}
+  .view-tab{border:1px solid var(--line);border-bottom:none;background:#eef3f9;color:var(--ink-2);
+            padding:9px 20px;border-radius:7px 7px 0 0;font-weight:800;font-size:13.5px;position:relative;top:2px}
+  .view-tab:hover{background:var(--bl-soft);color:var(--bl-dark)}
+  .view-tab.active{background:var(--bl);border-color:var(--bl);color:#fff}
 
   main{padding:18px 22px 40px;max-width:1500px;margin:0 auto}
 
@@ -128,16 +133,23 @@
              display:flex;align-items:center;gap:8px;background:linear-gradient(180deg,#fbfdff,#f3f7fc)}
   .card > h3 .dot{width:8px;height:8px;border-radius:50%;background:var(--bl);flex:0 0 auto}
   .card .card-body{padding:14px 16px}
+  .tbl-tools{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--line);
+             background:#fbfdff}
+  .tbl-search{flex:1 1 auto;min-width:0;max-width:520px;padding:8px 11px;border:1px solid var(--line);
+              border-radius:6px;font-size:13px;background:#fff}
+  .tbl-count{font-size:12.5px;color:var(--ink-3);white-space:nowrap;font-variant-numeric:tabular-nums}
 
   /* ---- warnings ---- */
   .warn-list{list-style:none;max-height:340px;overflow:auto}
-  .warn-list li{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding:8px 16px;
+  .warn-list li{display:grid;grid-template-columns:112px minmax(0,1.7fr) minmax(0,1.7fr) 104px minmax(0,1.3fr);
+                gap:0 16px;align-items:center;padding:8px 16px;
                 border-bottom:1px solid var(--line);font-size:13.5px}
   .warn-list li:last-child{border-bottom:none}
-  .warn-list .w-name{font-weight:700;min-width:160px}
-  .warn-list .w-lic{color:var(--ink-2);min-width:140px}
-  .warn-list .w-date{font-variant-numeric:tabular-nums;color:var(--ink-2)}
-  .warn-list .w-days{font-size:12px;color:var(--ink-3)}
+  .warn-list li > .chip{justify-self:start}
+  .warn-list .w-name{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .warn-list .w-lic{color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .warn-list .w-date{font-variant-numeric:tabular-nums;color:var(--ink-2);white-space:nowrap}
+  .warn-list .w-days{font-size:12px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .warn-empty{padding:16px;color:var(--ink-2);font-size:13.5px;display:flex;align-items:center;gap:8px}
   .warn-more{padding:9px 16px;font-size:12.5px;color:var(--ink-3);border-top:1px solid var(--line)}
 
@@ -347,7 +359,6 @@
   <span class="tb-sep" aria-hidden="true"></span>
   <button class="btn ghost" id="btnExport" type="button">⬇️ <span data-i18n="btnExport">Exportieren</span></button>
   <button class="btn ghost" id="btnMail" type="button">✉️ <span data-i18n="btnMail">E-Mail</span></button>
-  <button class="btn ghost" id="btnPrint" type="button">🖨️ <span data-i18n="btnPrint">Drucken / PDF</span></button>
   <span class="tb-sep" aria-hidden="true"></span>
   <button class="btn ghost" id="btnColumns" type="button">🧭 <span data-i18n="btnColumns">Spalten</span></button>
   <button class="btn ghost" id="btnQuality" type="button">🔎 <span data-i18n="btnQuality">Datenqualität</span></button>
@@ -405,7 +416,7 @@ const I18N = {
     warnMore: "… {n} weitere Einträge (Filter/Suche nutzen oder drucken für die Vollliste).",
     daysAgo: "vor {d} Tagen abgelaufen", daysToday: "läuft heute ab", daysIn: "läuft in {d} Tagen ab",
     tblTitle: "Alle Datensätze",
-    search: "Suche…", fltAll: "Alle",
+    search: "Suche…", searchPh: "Suchen: Name, CPC valid until, CPC TKI valid until, Pilot Lic.Nr. …", fltAll: "Alle",
     stExpired: "Abgelaufen", stCritical: "Kritisch", stWarning: "Warnung", stOk: "Gültig", stNone: "Kein Datum",
     stInvalid: "Datum ungültig",
     fltReset: "Filter zurücksetzen", countOf: "{a} von {b} Zeilen",
@@ -417,7 +428,7 @@ const I18N = {
     imported: "{n} Zeilen in {s} Tab(s) importiert ({f})",
     fltEmpty: "(leer)",
     compactCols: "Nur Spalten mit Warnungen",
-    tabRows: "{n} Zeilen",
+    tabRows: "{n} Zeilen", tabOverview: "Übersicht", tabCalendar: "Kalender",
     importErr: "Datei konnte nicht gelesen werden: {e}",
     importEmpty: "Keine Datenzeilen in der Datei gefunden.",
     backupDone: "Backup heruntergeladen.",
@@ -467,8 +478,9 @@ const I18N = {
     refDate: "Referenzdatum (heute)",
     refDateSub: "Alle Ablauffristen werden gegen dieses tagesaktuelle Datum berechnet.",
     activeOnly: "Nur Aktive",
-    hideOld: "Länger als 6 Monate abgelaufen ausblenden",
-    hideOldTip: "Blendet nur einzelne Ablaufdaten aus, die mehr als 6 Monate zurückliegen. Andere (z. B. erst kürzlich abgelaufene) Einträge derselben Person bleiben sichtbar.",
+    hideOld: "Länger als {m} Monate abgelaufen ausblenden",
+    hideOldTip: "Blendet nur einzelne Ablaufdaten aus, die mehr als {m} Monate zurückliegen. Andere (z. B. erst kürzlich abgelaufene) Einträge derselben Person bleiben sichtbar. Der Zeitraum ist in den Einstellungen anpassbar.",
+    setHideMonths: "„Länger abgelaufen ausblenden\" ab (Monate)",
     hideOldCellTip: "Vor über 6 Monaten abgelaufen — ausgeblendet",
     personLicenses: "Lizenzen & Ablaufdaten", personOther: "Weitere Angaben",
     personNoDates: "Keine Datumseinträge vorhanden.",
@@ -539,7 +551,7 @@ const I18N = {
     warnMore: "… {n} more entries (use search/filters or print for the full list).",
     daysAgo: "expired {d} days ago", daysToday: "expires today", daysIn: "expires in {d} days",
     tblTitle: "All records",
-    search: "Search…", fltAll: "All",
+    search: "Search…", searchPh: "Search: name, CPC valid until, CPC TKI valid until, Pilot Lic.Nr. …", fltAll: "All",
     stExpired: "Expired", stCritical: "Critical", stWarning: "Warning", stOk: "Valid", stNone: "No date",
     stInvalid: "invalid date",
     fltReset: "Reset filters", countOf: "{a} of {b} rows",
@@ -551,7 +563,7 @@ const I18N = {
     imported: "{n} rows imported across {s} tab(s) ({f})",
     fltEmpty: "(empty)",
     compactCols: "Warning columns only",
-    tabRows: "{n} rows",
+    tabRows: "{n} rows", tabOverview: "Overview", tabCalendar: "Calendar",
     importErr: "Could not read file: {e}",
     importEmpty: "No data rows found in the file.",
     backupDone: "Backup downloaded.",
@@ -601,8 +613,9 @@ const I18N = {
     refDate: "Reference date (today)",
     refDateSub: "All expiry deadlines are calculated against this current date.",
     activeOnly: "Active only",
-    hideOld: "Hide entries expired over 6 months",
-    hideOldTip: "Hides only individual expiry dates more than 6 months in the past. Other (e.g. recently expired) entries of the same person stay visible.",
+    hideOld: "Hide entries expired over {m} months",
+    hideOldTip: "Hides only individual expiry dates more than {m} months in the past. Other (e.g. recently expired) entries of the same person stay visible. The period is adjustable in the settings.",
+    setHideMonths: "\"Hide long-expired\" from (months)",
     hideOldCellTip: "Expired over 6 months ago — hidden",
     personLicenses: "Licenses & expiry dates", personOther: "Other details",
     personNoDates: "No date entries available.",
@@ -662,6 +675,21 @@ const pad2 = (n) => String(n).padStart(2, "0");
 /* "looks like a d.m.y date" — shared by parser, cell renderer and quality report */
 const DATE_LIKE_RE = /^\d{1,2}[.\/-]\d{1,2}[.\/-]\d{2,4}$/;
 function isDateLike(v){ return DATE_LIKE_RE.test(String(v == null ? "" : v).trim()); }
+/* columns that must default to "date" regardless of their content ratio (a few of
+   these mix dates with remarks, e.g. CoR carries both a date and text) */
+function normLabel(s){
+  return String(s == null ? "" : s).toLowerCase()
+    .replace(/\s*\(\d+\)\s*$/, "")          // drop the "(2)" dedup suffix
+    .replace(/·/g, " ")
+    .replace(/\s*\/\s*/g, "/")
+    .replace(/\s+/g, " ").trim();
+}
+const FORCE_DATE_LABELS = new Set([
+  "cl350 rating ir", "cl350 tri",
+  "emb505 sfi", "emb505 tre/sfe", "emb505 tri", "emb505 rating ir",
+  "first cpc", "cor"
+]);
+function isForcedDateLabel(label){ return FORCE_DATE_LABELS.has(normLabel(label)); }
 function locale(){ return state.settings.lang === "de" ? "de-DE" : "en-GB"; }
 /* Intl formatters are expensive to construct — cache per language */
 const fmtCache = {};
@@ -720,7 +748,7 @@ function defaultState(){
     meta: { fileName: "", importedAt: "" },
     sheets: [],           // [{name, columns:[{key,label,type:'text'|'date'}], rows:[{c:{key:string}}]}]
     active: 0,            // index of the sheet currently shown
-    settings: { lang: "de", critDays: 30, warnDays: 90, columnOverrides: {},
+    settings: { lang: "de", critDays: 30, warnDays: 90, hideMonths: 6, columnOverrides: {},
                 mailTo: DEFAULT_MAILTO, lastVersion: "" }
   };
 }
@@ -732,7 +760,7 @@ function defaultUI(){
   /* statuses: multi-select quick filter — defaults to "expired" so the most
      urgent entries are in focus right after upload; reset shows everything */
   return { q:"", statuses:["expired"], colFilters:{}, sortKey:"__status", sortDir:1,
-           compact:false, activeOnly:false, hideLongExpired:false, calMonth:null };
+           compact:false, activeOnly:false, hideLongExpired:false, tab:"dash", calMonth:null };
 }
 function toggleStatus(st){
   const i = ui.statuses.indexOf(st);
@@ -849,6 +877,7 @@ function sanitizeState(o){
   s.settings.critDays = coerceInt(set.critDays, 30, 0, 3650);
   s.settings.warnDays = coerceInt(set.warnDays, 90, 0, 3650);
   if (s.settings.warnDays <= s.settings.critDays) s.settings.warnDays = s.settings.critDays + 1;
+  s.settings.hideMonths = coerceInt(set.hideMonths, 6, 1, 120);
   s.settings.columnOverrides = {};
   if (typeof set.columnOverrides === "object" && set.columnOverrides){
     let n = 0;
@@ -987,9 +1016,13 @@ function evalRow(row){
 /* ---------- "hide long-expired" toggle ---------- */
 /* ISO date exactly 6 months before today; a date entry that expired before this
    is considered "long expired" and can be hidden via the toggle. */
+function hideMonths(){
+  const m = state.settings.hideMonths;
+  return (typeof m === "number" && m >= 1 && m <= 120) ? m : 6;
+}
 function longExpiredCutoffISO(){
   const p = todayParts();
-  return new Date(Date.UTC(p.y, p.m - 1 - 6, p.d)).toISOString().slice(0, 10);
+  return new Date(Date.UTC(p.y, p.m - 1 - hideMonths(), p.d)).toISOString().slice(0, 10);
 }
 function isLongExpiredItem(it, cutoff){
   return !!(cutoff && it.iso && it.status === "expired" && it.iso < cutoff);
@@ -1202,9 +1235,10 @@ function parseSheet(ws, sheetName){
     const ratio = stats[cIdx].nonEmpty > 0 ? stats[cIdx].dateLike / stats[cIdx].nonEmpty : 0;
     let type = (ratio >= 0.6 && stats[cIdx].dateLike >= 1) ||
                (stats[cIdx].dateLike >= 3 && ratio >= 0.3) ? "date" : "text";
+    if (isForcedDateLabel(baseLabel)) type = "date";      // known date columns, whatever the content ratio
     const ovr = overrides[ovKey] !== undefined ? overrides[ovKey]
               : overrides[sheetName + "¦" + label];       // legacy key fallback
-    if (ovr === "date" || ovr === "text") type = ovr;
+    if (ovr === "date" || ovr === "text") type = ovr;     // an explicit user override still wins
     columns.push({ key: "c"+cIdx, label, type, ovKey });
   }
   if (!columns.length) return null;
@@ -1350,100 +1384,168 @@ function exportCSV(rows, suffix){
   downloadCSV(lines, name);
   toast(t("expDone", {f: name}));
 }
+/* shrink a string with an ellipsis until it fits maxW (mm) at the current font */
+function fitPdfText(doc, s, maxW){
+  s = String(s == null ? "" : s);
+  if (doc.getTextWidth(s) <= maxW) return s;
+  while (s.length > 1 && doc.getTextWidth(s.slice(0, -1) + "…") > maxW) s = s.slice(0, -1);
+  return s.slice(0, -1) + "…";
+}
+const PDF_ST_RGB = {
+  expired:  [208, 59, 59],  critical: [236, 131, 90],
+  warning:  [178, 125, 12], ok: [8, 97, 8], none: [120, 130, 145]
+};
+
+/* Whole-list report — always ONE landscape page. Items are laid out in up to three
+   columns with the row height/font scaled so everything fits on a single sheet. */
 function exportPDF(rows, statusSet, suffix){
   const doc = new window.jspdf.jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
-  const W = 297, H = 210, M = 14;
-  /* statusSet controls which item statuses appear; default: alerts only */
+  const W = 297, H = 210, M = 12;
   const wanted = (statusSet && statusSet.length) ? statusSet : ["expired", "critical", "warning"];
   const { items, perLic } = collectItems(rows, wanted);
 
-  const colX = [M, M+30, M+95, M+170, M+200];         // Status | Name | Lizenz | Datum | Hinweis
-  const colW = [28, 63, 73, 28, W-M-(M+200)];
-  const headerH = 8, rowH = 6.5;
-  let y = 0;
+  doc.setFillColor(23, 63, 119); doc.rect(0, 0, W, 20, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold"); doc.setFontSize(13);
+  doc.text(t("pdfTitle"), M, 9);
+  doc.setFont("helvetica", "normal"); doc.setFontSize(8.5);
+  doc.text(sheet().name + "  ·  " + t("footAsOf", {t: fmtNow()}), M, 15.5);
+  doc.text(t("appTitle"), W - M, 9, { align: "right" });
+  doc.setTextColor(30, 40, 60); doc.setFontSize(9);
+  doc.text(t("pdfSummary", {e: perLic.expired, c: perLic.critical, w: perLic.warning, o: perLic.ok}), M, 27);
 
-  function pageHeader(){
-    doc.setFillColor(23, 63, 119);                     // --bl-dark
-    doc.rect(0, 0, W, 22, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFont("helvetica", "bold"); doc.setFontSize(14);
-    doc.text(t("pdfTitle"), M, 10);
-    doc.setFont("helvetica", "normal"); doc.setFontSize(9);
-    doc.text(sheet().name + "  ·  " + t("footAsOf", {t: fmtNow()}), M, 17);
-    doc.text(t("appTitle"), W - M, 10, { align: "right" });
-    doc.setTextColor(30, 40, 60);
-    y = 30;
-    doc.setFontSize(9.5);
-    doc.text(t("pdfSummary", {e: perLic.expired, c: perLic.critical, w: perLic.warning, o: perLic.ok}), M, y);
-    y += 7;
-    tableHead();
-  }
-  function tableHead(){
-    doc.setFillColor(33, 96, 174);                     // --bl
-    doc.rect(M, y, W - 2*M, headerH, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFont("helvetica", "bold"); doc.setFontSize(9);
-    const labels = [t("colStatus"), t("person"), t("pdfLic"), t("pdfDate"), t("pdfDays")];
-    labels.forEach((l, i) => doc.text(l, colX[i] + 2, y + 5.5));
-    y += headerH;
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(30, 40, 60);
-  }
-  function pageFooter(){
-    doc.setFontSize(8);
-    doc.setTextColor(120, 130, 145);
-    doc.text(COPYRIGHT + "  ·  Version " + APP_VERSION, M, H - 7);
-    doc.setTextColor(30, 40, 60);
-  }
-  const ST_PDF = {
-    expired:  { label: () => stLabel("expired"),  rgb: [208, 59, 59]  },
-    critical: { label: () => stLabel("critical"), rgb: [236, 131, 90] },
-    warning:  { label: () => stLabel("warning"),  rgb: [178, 125, 12] },
-    ok:       { label: () => stLabel("ok"),       rgb: [8, 97, 8]     }
-  };
-  pageHeader();
+  const areaTop = 32, areaBot = H - 9, areaH = areaBot - areaTop;
   if (!items.length){
-    doc.setFontSize(11);
-    doc.text(t("pdfNoWarn"), M, y + 8);
-  }
-  let alt = false;
-  for (const it of items){
-    if (y + rowH > H - 14){
-      pageFooter();
-      doc.addPage();
-      y = 0;
-      pageHeader();
-      alt = false;
+    doc.setFontSize(11); doc.text(t("pdfNoWarn"), M, areaTop + 8);
+  } else {
+    const IDEAL = 5.0;                                  // preferred mm per row
+    let nCol = 1;
+    while (nCol < 3 && Math.ceil(items.length / nCol) * IDEAL > areaH) nCol++;
+    const rowsPerCol = Math.ceil(items.length / nCol);
+    const rowH = Math.min(6, areaH / rowsPerCol);       // scale down so all rows fit one page
+    const fs = Math.max(5.5, Math.min(8.5, rowH * 1.55));
+    const colGap = 6;
+    const colW = (W - 2*M - (nCol - 1) * colGap) / nCol;
+    doc.setFont("helvetica", "normal"); doc.setFontSize(fs);
+    for (let i = 0; i < items.length; i++){
+      const it = items[i];
+      const col = Math.floor(i / rowsPerCol);
+      const rowInCol = i - col * rowsPerCol;
+      const cx = M + col * (colW + colGap);
+      const top = areaTop + rowInCol * rowH;
+      if (rowInCol % 2 === 1){ doc.setFillColor(240, 245, 251); doc.rect(cx, top, colW, rowH, "F"); }
+      const rgb = PDF_ST_RGB[it.status] || PDF_ST_RGB.none;
+      doc.setTextColor(rgb[0], rgb[1], rgb[2]);
+      const line = fmtDate(it.iso) + "  " + it.name + " — " + it.lic;
+      doc.text(fitPdfText(doc, line, colW - 3), cx + 1.5, top + rowH * 0.72);
     }
-    if (alt){
-      doc.setFillColor(240, 245, 251);
-      doc.rect(M, y, W - 2*M, rowH, "F");
-    }
-    alt = !alt;
-    const st = ST_PDF[it.status];
-    doc.setTextColor(st.rgb[0], st.rgb[1], st.rgb[2]);
-    doc.setFont("helvetica", "bold");
-    doc.text(st.label(), colX[0] + 2, y + 4.7);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(30, 40, 60);
-    doc.setFontSize(9);
-    doc.text(String(it.name).slice(0, 40), colX[1] + 2, y + 4.7);
-    doc.text(String(it.lic).slice(0, 48), colX[2] + 2, y + 4.7);
-    doc.text(fmtDate(it.iso), colX[3] + 2, y + 4.7);
-    doc.text(daysText(it.days).slice(0, 34), colX[4] + 2, y + 4.7);
-    y += rowH;
   }
-  pageFooter();
-  const total = doc.getNumberOfPages();
-  for (let i = 1; i <= total; i++){
-    doc.setPage(i);
-    doc.setFontSize(8);
-    doc.setTextColor(120, 130, 145);
-    doc.text(t("pdfPage", {a: i, b: total}), W - M, H - 7, { align: "right" });
-  }
+  doc.setFontSize(8); doc.setTextColor(120, 130, 145);
+  doc.text(COPYRIGHT + "  ·  Version " + APP_VERSION, M, H - 4);
   const name = exportBaseName(suffix) + ".pdf";
   doc.save(name);
   toast(t("expDone", {f: name}));
+}
+
+/* Single-person report — Personal Details first, then the licence/date list, then
+   any remaining details. Portrait, reads like a data sheet. */
+function exportPersonPDF(row, idx){
+  const doc = new window.jspdf.jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const W = 210, H = 297, M = 16;
+  const sh = sheet();
+  const name = rowName(row, idx);
+  const ev = evalRow(row);
+  let y = 32;
+  const kvX = M + 60;
+
+  doc.setFillColor(23, 63, 119); doc.rect(0, 0, W, 22, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold"); doc.setFontSize(15);
+  doc.text(fitPdfText(doc, name, W - 2*M), M, 11);
+  doc.setFont("helvetica", "normal"); doc.setFontSize(9);
+  doc.text(sh.name + "  ·  " + t("footAsOf", {t: fmtNow()}), M, 17.5);
+  doc.setTextColor(30, 40, 60);
+
+  const pageBreak = (need) => { if (y > H - (need || 16)){ doc.addPage(); y = 22; } };
+  const sectionTitle = (txt) => {
+    pageBreak(24);
+    doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(23, 63, 119);
+    doc.text(txt, M, y); y += 2.5;
+    doc.setDrawColor(210, 220, 232); doc.line(M, y, W - M, y); y += 5.5;
+    doc.setTextColor(30, 40, 60);
+  };
+  const kvRows = (pairs) => {
+    doc.setFontSize(10);
+    for (const [k, v] of pairs){
+      pageBreak();
+      doc.setFont("helvetica", "bold"); doc.text(fitPdfText(doc, k + ":", 56), M, y);
+      doc.setFont("helvetica", "normal"); doc.text(fitPdfText(doc, v, W - M - kvX), kvX, y);
+      y += 6;
+    }
+  };
+
+  /* gather personal fields in a fixed order (mirrors the detail view) */
+  const nameKeySet = new Set(nameColKeys());
+  const usedKeys = new Set();
+  const personal = [];
+  const PERSONAL_PATTERNS = [
+    /first\s*name|vorname/i, /surname|last\s*name|nachname/i, /pilot\s*lic/i,
+    /mail\s*aaa/i, /mail\s*priv/i, /telephone|telefon/i, /adresse|address/i, /home\s*base/i
+  ];
+  for (const re of PERSONAL_PATTERNS){
+    const col = sh.columns.find(c => c.type === "text" && re.test(c.label) && !usedKeys.has(c.key));
+    if (!col) continue;
+    usedKeys.add(col.key);
+    personal.push([col.label, String(row.c[col.key] || "—")]);
+  }
+  const other = [];
+  for (const c of sh.columns){
+    if (nameKeySet.has(c.key) || usedKeys.has(c.key)) continue;
+    const v = row.c[c.key];
+    if (!v) continue;
+    if (c.type === "date" && parseDateString(v)) continue;   // real dates belong to the licence list
+    other.push([c.label, String(v)]);
+  }
+
+  /* 1) Personal Details first */
+  sectionTitle(t("personDetails"));
+  if (personal.length) kvRows(personal);
+  else { doc.setFontSize(10); doc.text("—", M, y); y += 6; }
+
+  /* 2) Licences & expiry dates */
+  y += 3; sectionTitle(t("personLicenses"));
+  const items = ev.items.filter(i => i.iso).sort((a, b) => a.iso < b.iso ? -1 : 1);
+  if (!items.length){ doc.setFontSize(10); doc.text(t("personNoDates"), M, y); y += 6; }
+  else {
+    doc.setFillColor(33, 96, 174); doc.rect(M, y, W - 2*M, 7, "F");
+    doc.setTextColor(255, 255, 255); doc.setFont("helvetica", "bold"); doc.setFontSize(9);
+    doc.text(t("pdfLic"), M + 2, y + 4.8);
+    doc.text(t("pdfDate"), M + 92, y + 4.8);
+    doc.text(t("colStatus"), M + 126, y + 4.8);
+    y += 7; doc.setFont("helvetica", "normal"); doc.setTextColor(30, 40, 60);
+    let alt = false;
+    for (const it of items){
+      pageBreak(14);
+      if (alt){ doc.setFillColor(240, 245, 251); doc.rect(M, y, W - 2*M, 6.5, "F"); }
+      alt = !alt;
+      doc.setFontSize(9); doc.setTextColor(30, 40, 60); doc.setFont("helvetica", "normal");
+      doc.text(fitPdfText(doc, it.col.label, 86), M + 2, y + 4.5);
+      doc.text(fmtDate(it.iso), M + 92, y + 4.5);
+      const rgb = PDF_ST_RGB[it.status] || PDF_ST_RGB.none;
+      doc.setTextColor(rgb[0], rgb[1], rgb[2]); doc.setFont("helvetica", "bold");
+      doc.text(fitPdfText(doc, stLabel(it.status) + " · " + daysText(it.days), W - M - (M + 126)), M + 126, y + 4.5);
+      y += 6.5;
+    }
+  }
+
+  /* 3) Remaining details */
+  if (other.length){ y += 4; sectionTitle(t("personOther")); kvRows(other); }
+
+  doc.setFontSize(8); doc.setTextColor(120, 130, 145);
+  doc.text(COPYRIGHT + "  ·  Version " + APP_VERSION, M, H - 10);
+  const fname = exportBaseName(name) + ".pdf";
+  doc.save(fname);
+  toast(t("expDone", {f: fname}));
 }
 
 /* iCal export: one all-day event per expiry date with 30/7-day reminders */
@@ -1767,7 +1869,13 @@ function filteredRows(statusOverride){
       let hit = false;
       for (const c of sheet().columns){
         const v = row.c[c.key];
-        if (v && String(v).toLowerCase().includes(q)){ hit = true; break; }
+        if (!v) continue;
+        if (String(v).toLowerCase().includes(q)){ hit = true; break; }
+        /* date cells are stored as ISO — also match the displayed dd.mm.yyyy form */
+        if (c.type === "date"){
+          const iso = parseDateString(v);
+          if (iso && fmtDate(iso).toLowerCase().includes(q)){ hit = true; break; }
+        }
       }
       if (!hit && stLabel(ev.worst).toLowerCase().includes(q)) hit = true;
       if (!hit) return;
@@ -1879,6 +1987,19 @@ function render(){
     '<span class="rd-date">' + esc(fmtTodayLong()) + "</span>" +
     '<span class="rd-sub">' + esc(t("refDateSub")) + "</span></div>";
 
+  /* top view tabs: overview vs. calendar (calendar gets its own screen) */
+  html += '<div class="view-tabs" role="tablist">' +
+    '<button type="button" class="view-tab' + (ui.tab !== "cal" ? " active" : "") + '" role="tab" aria-selected="' +
+      (ui.tab !== "cal") + '" data-view="dash">' + esc(t("tabOverview")) + "</button>" +
+    '<button type="button" class="view-tab' + (ui.tab === "cal" ? " active" : "") + '" role="tab" aria-selected="' +
+      (ui.tab === "cal") + '" data-view="cal">📅 ' + esc(t("tabCalendar")) + "</button>" +
+    "</div>";
+
+  if (ui.tab === "cal"){
+    if (!ui.calMonth) ui.calMonth = todayISO().slice(0, 7);
+    html += renderCalendar(calItemsByDay());
+  } else {
+
   /* KPI tiles */
   html += '<div class="kpis">' +
     kpiTile("accent", null, t("kPersons"), personCount, t("kFileSub")) +
@@ -1903,7 +2024,7 @@ function render(){
       : "") +
     (longExpiredCount || ui.hideLongExpired
       ? '<button type="button" class="sb-active sb-hideold" id="sbHideOld" aria-pressed="' + ui.hideLongExpired +
-        '" title="' + esc(t("hideOldTip")) + '">🕒 ' + esc(t("hideOld")) +
+        '" title="' + esc(t("hideOldTip", {m: hideMonths()})) + '">🕒 ' + esc(t("hideOld", {m: hideMonths()})) +
         '<span class="cnt">' + longExpiredCount + "</span></button>"
       : "") +
     chipDefs.map(([st, n]) =>
@@ -1920,8 +2041,8 @@ function render(){
     for (const w of shownWarnings){
       const daysTxt = daysText(w.days);
       html += "<li>" + chip(w.status) +
-        '<span class="w-name">' + esc(w.name) + "</span>" +
-        '<span class="w-lic">' + esc(w.col) + "</span>" +
+        '<span class="w-name" title="' + esc(w.name) + '">' + esc(w.name) + "</span>" +
+        '<span class="w-lic" title="' + esc(w.col) + '">' + esc(w.col) + "</span>" +
         '<span class="w-date">' + esc(fmtDate(w.iso)) + "</span>" +
         '<span class="w-days">' + esc(daysTxt) + "</span></li>";
     }
@@ -1930,10 +2051,6 @@ function render(){
       html += '<div class="warn-more">' + esc(t("warnMore", {n: visWarnings.length - WARN_CAP})) + "</div>";
   }
   html += "</div>";
-
-  /* month calendar */
-  if (!ui.calMonth) ui.calMonth = todayISO().slice(0, 7);
-  html += renderCalendar(calItemsByDay());
 
   /* table card with filters */
   const rows = filteredRows();
@@ -1948,6 +2065,11 @@ function render(){
         : isName ? "min-width:140px;max-width:140px;" : "") + '"'
     : "";
   html += '<div class="card"><h3><span class="dot"></span>' + esc(t("tblTitle")) + "</h3>";
+  html += '<div class="tbl-tools">' +
+    '<input type="search" id="tblSearch" class="tbl-search" placeholder="' + esc(t("searchPh")) +
+      '" value="' + esc(ui.q) + '" aria-label="' + esc(t("searchPh")) + '">' +
+    '<span class="tbl-count">' + esc(t("countOf", {a: rows.length, b: personCount})) + "</span>" +
+    "</div>";
   html += '<div class="table-wrap"><table class="data" id="dataTable"><thead><tr>';
   html += '<th class="delcell stick" scope="col" style="left:0"><span class="sr-only">' + esc(t("delRow")) + "</span></th>";
   html += thCell("__status", t("colStatus"), stickStyle("__status"));
@@ -1993,6 +2115,7 @@ function render(){
     }
   }
   html += "</tbody></table></div></div>";
+  }  /* end overview tab */
   main.innerHTML = html;
   wireDashboard();
   renderFooter();
@@ -2144,6 +2267,27 @@ function wireUpload(){
   if (back) back.addEventListener("click", () => { currentView = "dash"; render(); });
 }
 function wireDashboard(){
+  document.querySelectorAll(".view-tab").forEach(vt => {
+    vt.addEventListener("click", () => {
+      const v = vt.getAttribute("data-view");
+      if (ui.tab === v) return;
+      ui.tab = v;
+      render();
+    });
+  });
+  const search = document.getElementById("tblSearch");
+  if (search){
+    let sTimer = null;
+    search.addEventListener("input", () => {
+      clearTimeout(sTimer);
+      sTimer = setTimeout(() => {
+        ui.q = search.value;
+        render();
+        const s = document.getElementById("tblSearch");   // render() rebuilt #main — restore focus + caret
+        if (s){ s.focus(); s.setSelectionRange(s.value.length, s.value.length); }
+      }, 200);
+    });
+  }
   document.querySelectorAll(".stchip").forEach(chipBtn => {
     chipBtn.addEventListener("click", () => {
       toggleStatus(chipBtn.getAttribute("data-st"));
@@ -2325,7 +2469,7 @@ function openPerson(idx){
     bodyHTML: body,
     buttons: [{ label: t("close"), kind: "ghost", onClick: () => true }],
     onOpen: (back) => {
-      back.querySelector("#pdPdf").addEventListener("click", () => exportPDF(personRows, ALL_ST, name));
+      back.querySelector("#pdPdf").addEventListener("click", () => exportPersonPDF(row, idx));
       back.querySelector("#pdXlsx").addEventListener("click", () => exportXLSX(personRows, name));
       back.querySelector("#pdCsv").addEventListener("click", () => exportCSV(personRows, name));
       back.querySelector("#pdIcs").addEventListener("click", () => exportICS(personRows, ALL_ST, name));
@@ -2554,6 +2698,8 @@ function openSettings(){
     '<input type="number" id="setCrit" min="0" max="3650" value="' + esc(state.settings.critDays) + '">' +
     '<label for="setWarn">' + esc(t("setWarn")) + "</label>" +
     '<input type="number" id="setWarn" min="0" max="3650" value="' + esc(state.settings.warnDays) + '">' +
+    '<label for="setHideMonths">' + esc(t("setHideMonths")) + "</label>" +
+    '<input type="number" id="setHideMonths" min="1" max="120" value="' + esc(hideMonths()) + '">' +
     '<hr class="set-sep">' +
     '<h4 class="set-h">' + esc(t("setBackupH")) + "</h4>" +
     '<p class="set-sub">' + esc(t("setBackupHint")) + "</p>" +
@@ -2571,6 +2717,7 @@ function openSettings(){
           if (warn <= crit){ toast(t("setErr"), "err"); return false; }
           state.settings.critDays = crit;
           state.settings.warnDays = warn;
+          state.settings.hideMonths = coerceInt(back.querySelector("#setHideMonths").value, hideMonths(), 1, 120);
           bumpEval();
           saveState();
           render();
@@ -2675,10 +2822,6 @@ document.getElementById("compareInput").addEventListener("change", (e) => {
   e.target.value = "";
 });
 document.getElementById("btnClear").addEventListener("click", openClear);
-document.getElementById("btnPrint").addEventListener("click", () => {
-  if (!state.sheets.length){ toast(t("printHint"), "warn"); return; }
-  window.print();
-});
 function setLang(lang){
   if (state.settings.lang === lang) return;
   state.settings.lang = lang;
