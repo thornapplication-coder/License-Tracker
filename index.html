@@ -215,17 +215,20 @@
   .cal-head .spacer{flex:1 1 auto}
   .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;padding:12px 16px 16px}
   .cal-wd{font-size:11px;font-weight:800;color:var(--ink-3);text-transform:uppercase;text-align:center;padding:2px 0}
-  .cal-day{min-height:58px;border:1px solid var(--line);border-radius:6px;padding:4px 6px;font-size:12px;
-           background:#fff;position:relative;text-align:left}
+  .cal-day{min-height:62px;border:1px solid var(--line);border-radius:6px;padding:4px 6px;font-size:12px;
+           background:#fff;position:relative;text-align:left;vertical-align:top}
   .cal-day.empty{border:none;background:transparent}
   .cal-day .dnum{font-weight:700;color:var(--ink-2)}
   .cal-day.today{border:2px solid var(--bl);background:var(--bl-soft)}
   .cal-day.has{cursor:pointer}
   .cal-day.has:hover{border-color:var(--bl-accent);box-shadow:0 2px 6px rgba(15,44,86,.12)}
-  .cal-badge{display:inline-flex;align-items:center;gap:3px;border-radius:7px;font-size:10.5px;font-weight:800;
-             padding:1px 7px;margin-top:3px}
-  .cal-badge.expired{background:var(--st-crit-bg);color:var(--st-crit-text);border:1px solid var(--st-crit)}
-  .cal-badge.critical{background:var(--st-serious-bg);color:var(--st-serious-text);border:1px solid var(--st-serious)}
+  .cal-names{display:flex;flex-direction:column;gap:1px;margin-top:3px}
+  .cal-name{position:relative;padding-left:11px;font-size:10px;line-height:1.35;font-weight:600;color:var(--ink);
+            white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cal-name::before{content:"●";position:absolute;left:0;top:0;font-size:8px;line-height:1.7}
+  .cal-name.expired::before{color:var(--st-crit)}
+  .cal-name.critical::before{color:var(--st-serious)}
+  .cal-more{font-size:9.5px;font-weight:700;color:var(--ink-3);padding-left:11px}
 
   /* ---- status chips: color + icon + text, never color alone ---- */
   .chip{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:7px;font-size:11.5px;
@@ -2026,13 +2029,18 @@ function renderCalendar(byDay){
       cells += '<div class="' + cls + '"><span class="dnum">' + d + "</span></div>";
       continue;
     }
-    const expN = entries.filter(e => e.status === "expired").length;
-    const critN = entries.length - expN;
+    /* show the affected names (not just a count) — expired first, then critical */
+    const ordered = entries.slice().sort((a, b) => ST_RANK[a.status] - ST_RANK[b.status]);
+    const NAME_CAP = 4;
+    const names = ordered.slice(0, NAME_CAP).map(e =>
+      '<span class="cal-name ' + e.status + '" title="' + esc(e.name + " — " + e.lic + " (" + fmtDate(e.iso) + ")") + '">' +
+      esc(e.name) + "</span>").join("");
+    const rest = ordered.length - Math.min(ordered.length, NAME_CAP);
     cells += '<button type="button" class="' + cls + '" data-calday="' + iso + '" aria-label="' +
-      esc(t("calDayEntries", {d: fmtDate(iso)})) + '"><span class="dnum">' + d + "</span><br>" +
-      (expN ? '<span class="cal-badge expired">⛔ ' + expN + "</span> " : "") +
-      (critN ? '<span class="cal-badge critical">🔴 ' + critN + "</span>" : "") +
-      "</button>";
+      esc(t("calDayEntries", {d: fmtDate(iso)})) + '"><span class="dnum">' + d + "</span>" +
+      '<div class="cal-names">' + names +
+      (rest > 0 ? '<span class="cal-more">+' + rest + "</span>" : "") +
+      "</div></button>";
   }
   return '<div class="card cal-card"><h3><span class="dot"></span>' + esc(t("calTitle")) + "</h3>" +
     '<div class="cal-head">' +
