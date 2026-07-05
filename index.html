@@ -1880,7 +1880,6 @@ function render(){
         : isName ? "min-width:140px;max-width:140px;" : "") + '"'
     : "";
   html += '<div class="card"><h3><span class="dot"></span>' + esc(t("tblTitle")) + "</h3>";
-  html += renderFilters(rows.length, personCount);
   html += '<div class="table-wrap"><table class="data" id="dataTable"><thead><tr>';
   html += '<th class="delcell stick" scope="col" style="left:0"><span class="sr-only">' + esc(t("delRow")) + "</span></th>";
   html += thCell("__status", t("colStatus"), stickStyle("__status"));
@@ -2008,43 +2007,6 @@ function thCell(key, label, stickStyleAttr){
     esc(label) + '<span class="arrow">' + arrow + "</span></th>";
 }
 
-function renderFilters(shownCount, baseCount){
-  /* dynamic value filters: up to 3 text columns with 1–25 distinct values
-     (an "(empty)" option is added when the column also has blank cells) */
-  let dyn = "";
-  let used = 0;
-  const nameKeys = new Set(nameColKeys());
-  for (const c of textCols()){
-    if (used >= 3) break;
-    if (nameKeys.has(c.key)) continue;
-    const vals = new Set();
-    let empty = 0;
-    for (const r of sheet().rows){
-      const v = r.c[c.key];
-      if (v) vals.add(String(v)); else empty++;
-      if (vals.size > 25) break;
-    }
-    if (vals.size < 1 || vals.size > 25) continue;
-    if (vals.size < 2 && !empty) continue;
-    used++;
-    const sorted = [...vals].sort((a,b) => a.localeCompare(b, undefined, {sensitivity:"base", numeric:true}));
-    dyn += '<label for="flt-' + esc(c.key) + '">' + esc(c.label) + "</label>" +
-      '<select id="flt-' + esc(c.key) + '" data-colfilter="' + esc(c.key) + '">' +
-      '<option value="">' + esc(t("fltAll")) + "</option>" +
-      (empty ? '<option value="__empty__"' + (ui.colFilters[c.key] === "__empty__" ? " selected" : "") + ">" + esc(t("fltEmpty")) + "</option>" : "") +
-      sorted.map(v => '<option value="' + esc(v) + '"' + (ui.colFilters[c.key] === v ? " selected" : "") + ">" + esc(v) + "</option>").join("") +
-      "</select>";
-  }
-  return '<div class="filters">' +
-    '<input type="search" id="fltQ" placeholder="' + esc(t("search")) + '" value="' + esc(ui.q) + '" aria-label="' + esc(t("search")) + '">' +
-    dyn +
-    '<label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer">' +
-      '<input type="checkbox" id="fltCompact"' + (ui.compact ? " checked" : "") + ">" + esc(t("compactCols")) + "</label>" +
-    '<button class="btn ghost" id="fltReset" type="button">↺ ' + esc(t("fltReset")) + "</button>" +
-    '<span class="count">' + esc(t("countOf", {a: shownCount, b: baseCount != null ? baseCount : sheet().rows.length})) + "</span>" +
-    "</div>";
-}
-
 function renderUpload(){
   const hasData = state.sheets.length > 0;
   const totalRows = state.sheets.reduce((a, s) => a + s.rows.length, 0);
@@ -2104,18 +2066,6 @@ function wireUpload(){
   if (back) back.addEventListener("click", () => { currentView = "dash"; render(); });
 }
 function wireDashboard(){
-  const q = document.getElementById("fltQ");
-  let qTimer = null;
-  q.addEventListener("input", () => {
-    clearTimeout(qTimer);
-    qTimer = setTimeout(() => {
-      ui.q = q.value;
-      render();
-      const nq = document.getElementById("fltQ");
-      nq.focus();
-      nq.setSelectionRange(nq.value.length, nq.value.length);
-    }, 220);
-  });
   document.querySelectorAll(".stchip").forEach(chipBtn => {
     chipBtn.addEventListener("click", () => {
       toggleStatus(chipBtn.getAttribute("data-st"));
@@ -2160,21 +2110,6 @@ function wireDashboard(){
       cd.addEventListener("click", () => openCalDay(cd.getAttribute("data-calday")));
     });
   }
-  document.querySelectorAll("[data-colfilter]").forEach(sel => {
-    sel.addEventListener("change", () => {
-      const k = sel.getAttribute("data-colfilter");
-      if (sel.value) ui.colFilters[k] = sel.value; else delete ui.colFilters[k];
-      render();
-    });
-  });
-  document.getElementById("fltReset").addEventListener("click", () => {
-    ui.q = ""; ui.statuses = []; ui.colFilters = {}; ui.activeOnly = false;
-    render();
-  });
-  document.getElementById("fltCompact").addEventListener("change", (e) => {
-    ui.compact = e.target.checked;
-    render();
-  });
   document.querySelectorAll(".sheet-tab").forEach(tab => {
     tab.addEventListener("click", () => {
       const i = parseInt(tab.getAttribute("data-sheet"), 10);
