@@ -8,11 +8,19 @@ Die ganze App ist eine einzige Datei: **`index.html`** (plus die selbst gehostet
 Bibliotheken SheetJS und jsPDF in `vendor/`). Kein Build, kein Server, keine
 Installation — einfach im Browser öffnen.
 
-**Reiner Converter — keine Datenspeicherung:** Lizenzdaten werden **nie**
-gespeichert (weder auf einem Server noch im Browser). Beim Schließen oder
-Neuladen der Seite ist alles weg; es wird immer die aktuelle Excel-Liste frisch
-hochgeladen. Nur die Benutzereinstellungen (Sprache, Warnschwellen,
-Spaltenzuordnung) bleiben im Browser erhalten.
+**Reiner Converter — standardmäßig keine Datenspeicherung:** Es gibt **keinen
+Server**; alle Verarbeitung passiert lokal im Browser. Standardmäßig werden
+**keine Lizenzdaten gespeichert** — beim Schließen oder Neuladen ist alles weg,
+und es wird jeweils die aktuelle Excel-Liste frisch hochgeladen. Nur die
+Benutzereinstellungen (Sprache, Warnschwellen, Spaltenzuordnung) bleiben erhalten.
+
+**Optionale lokale Speicherung (Standard: AUS):** In den Einstellungen kann
+bewusst aktiviert werden, dass die zuletzt geladene Liste **unverschlüsselt im
+`localStorage` dieses Browsers/Geräts** behalten wird (Schlüssel `ew-ilc-data-v1`),
+sodass sie ein Neuladen übersteht. Ist die Option aktiv, zeigt das Kopf-Badge
+„💾 Lokal gespeichert"; sie lässt sich in den Einstellungen jederzeit abschalten
+und die Daten mit einem Klick löschen. Nur auf privaten, vertrauenswürdigen
+Geräten verwenden.
 
 > **Hinweis:** Dieser Ordner ist absichtlich vollständig unabhängig vom Rest des
 > Repositories. Zum Umzug in ein eigenes Repository einfach den kompletten Ordner
@@ -136,10 +144,14 @@ hochgeladen wird, bleibt die (ggf. manuell korrigierte) Spaltenzuordnung erhalte
 
 ## Sicherheit & Datenschutz
 
-- Läuft komplett clientseitig; keine Datenübertragung an Server.
-- **Keine Persistenz von Lizenzdaten** — Daten existieren nur im Arbeitsspeicher
-  des offenen Tabs (Datenschutz-freundlich, ideal für geteilte Rechner).
-- Content-Security-Policy per `<meta>`; SheetJS/jsPDF selbst gehostet (kein CDN).
+- Läuft komplett clientseitig; keine Datenübertragung an einen Server.
+- **Standardmäßig keine Persistenz von Lizenzdaten** — Daten existieren nur im
+  Arbeitsspeicher des offenen Tabs (ideal für geteilte Rechner). Optional lässt
+  sich in den Einstellungen die lokale Speicherung aktivieren; dann liegt die
+  Liste **unverschlüsselt** im `localStorage` dieses Geräts, bis sie dort
+  deaktiviert/gelöscht wird (siehe oben).
+- Content-Security-Policy per `<meta>`; SheetJS, jsPDF und xlsx-populate selbst
+  gehostet (kein CDN).
 - Alle Nutzerdaten werden beim Rendern HTML-escaped (inkl. `"` und `'`).
 
 ## Entwicklung

@@ -133,7 +133,6 @@
   .card > h3{font-size:14px;font-weight:800;color:var(--bl-dark);padding:12px 16px;border-bottom:1px solid var(--line);
              display:flex;align-items:center;gap:8px;background:linear-gradient(180deg,#fbfdff,#f3f7fc)}
   .card > h3 .dot{width:8px;height:8px;border-radius:50%;background:var(--bl);flex:0 0 auto}
-  .card .card-body{padding:14px 16px}
   .tbl-tools{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--line);
              background:#fbfdff}
   .tbl-search{flex:1 1 auto;min-width:0;max-width:520px;padding:8px 11px;border:1px solid var(--line);
@@ -270,12 +269,6 @@
   .chip.none    {background:var(--st-none-bg);   color:var(--st-none-text);   border-color:var(--st-none)}
 
   /* ---- filters ---- */
-  .filters{display:flex;flex-wrap:wrap;gap:9px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)}
-  .filters label{font-size:12px;font-weight:700;color:var(--ink-2)}
-  .filters input[type=search],.filters select{padding:7px 10px;border:1px solid var(--line);border-radius:6px;
-        background:#fff;color:var(--ink);min-width:120px;max-width:230px}
-  .filters input[type=search]{min-width:200px;flex:0 1 260px}
-  .filters .count{margin-left:auto;font-size:12.5px;color:var(--ink-2);font-variant-numeric:tabular-nums}
 
   /* ---- table ---- */
   .table-wrap{overflow:auto;max-height:70vh}
@@ -340,20 +333,6 @@
 
   .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
-  /* ---- print: one-page report ---- */
-  @media print{
-    body{background:#fff}
-    .toolbar,.filters,.dropzone,.upload-page,#toasts,.modal-back,.hdr-right,.sheet-tabs,
-    .statusbar,.cal-card,td.delcell,th.delcell{display:none !important}
-    header{background:var(--bl-dark) !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-    .table-wrap{overflow:visible;max-height:none}
-    table.data{width:100% !important;table-layout:fixed !important;min-width:0 !important}
-    table.data thead th{position:static}
-    table.data td,table.data th{overflow-wrap:anywhere;white-space:normal !important;font-size:10.5px;padding:4px 5px}
-    .warn-list{max-height:none;overflow:visible}
-    .card,.kpi{break-inside:avoid;box-shadow:none}
-    main{padding:8px 0;max-width:none}
-  }
 </style>
 </head>
 <body>
@@ -413,23 +392,24 @@ const I18N = {
     appTitle: "Instructor Overview – Dashboard",
     appSub: "Lizenz- & Berechtigungsüberwachung · Ablaufdaten im Blick",
     reloadTitle: "Seite neu laden?",
-    reloadBody: "Beim Neuladen werden die geladenen Daten verworfen (es wird nichts gespeichert). Danach bitte die aktuelle Excel-Liste wieder hochladen.",
+    reloadBody: "Beim Neuladen werden die geladenen Daten verworfen (lokales Speichern ist aus). Danach bitte die aktuelle Excel-Liste wieder hochladen.",
+    reloadBodyStored: "Die Seite wird neu geladen. Lokales Speichern ist AKTIV — die zuletzt geladene Liste bleibt in diesem Browser erhalten und wird danach wiederhergestellt.",
     reloadBtn: "Neu laden",
     updNote: "Update installiert — die App läuft jetzt in Version {v}.",
     calTitle: "Kalender — Abgelaufen & Kritisch",
-    calToday: "Heute", calPrev: "Voriger Monat", calNext: "Nächster Monat",
+    calToday: "Heute",
     calBack: "Zurück", calFwd: "Weiter",
     calMonthView: "Monat", calWeekView: "Woche", calAgendaView: "Agenda",
     calAgendaTitle: "Alle Termine (chronologisch)", calAgendaEmpty: "Keine anstehenden Termine.",
     calIcs: "In eigenen Kalender exportieren (.ics)",
     calDayEntries: "Fällige Lizenzen am {d}",
     personDetails: "Personal Details",
-    btnUpload: "Excel hochladen", btnRefresh: "Aktualisieren",
+    btnUpload: "Excel hochladen",
     btnBackupDown: "Backup (JSON) herunterladen", btnBackupUp: "Backup laden",
-    btnColumns: "Spalten", btnSettings: "Einstellungen", btnPrint: "Drucken / PDF",
+    btnColumns: "Spalten", btnSettings: "Einstellungen",
     btnClear: "Daten löschen",
     setBackupH: "Sicherung / Backup",
-    setBackupHint: "Aktuellen Stand als JSON-Datei sichern oder eine Sicherung wiederherstellen. Es wird nur die aktuell geladene Liste in die Datei geschrieben — dauerhaft gespeichert wird nichts.",
+    setBackupHint: "Aktuellen Stand als JSON-Datei sichern oder eine Sicherung wiederherstellen. Es wird nur die aktuell geladene Liste in die heruntergeladene Datei geschrieben (die App legt sie nicht selbst ab). Für dauerhaftes Behalten im Browser siehe „Lokale Speicherung\" oben.",
     dzTitle: "Excel-Datei hier ablegen",
     dzText: "oder per Button auswählen (.xlsx, .xls, .csv). Kopfzeile, Namens- und Datumsspalten werden automatisch erkannt.",
     dzHint: "Alternativ kannst du ein früheres JSON-Backup wiederherstellen.",
@@ -442,18 +422,16 @@ const I18N = {
     warnMore: "… {n} weitere Einträge (Filter/Suche nutzen oder drucken für die Vollliste).",
     daysAgo: "vor {d} Tagen abgelaufen", daysToday: "läuft heute ab", daysIn: "läuft in {d} Tagen ab",
     tblTitle: "Alle Datensätze",
-    search: "Suche…", searchPh: "Suchen: Name, CPC valid until, CPC TKI valid until, Pilot Lic.Nr. …", fltAll: "Alle",
+    searchPh: "Suchen: Name, CPC valid until, CPC TKI valid until, Pilot Lic.Nr. …",
     stExpired: "Abgelaufen", stCritical: "Kritisch", stWarning: "Warnung", stOk: "Gültig", stNone: "Kein Datum",
     stInvalid: "Datum ungültig",
-    fltReset: "Filter zurücksetzen", countOf: "{a} von {b} Zeilen",
+    countOf: "{a} von {b} Zeilen",
     colStatus: "Status", noRows: "Keine Zeilen entsprechen Suche/Filter.",
     footAsOf: "Stand: {t}", footFile: "Datei: {f} · importiert {t} · {n} Zeilen",
     footNoFile: "Noch keine Excel-Datei importiert.",
     saveErr: "Einstellungen konnten nicht gespeichert werden ⚠",
     refreshed: "Ansicht aktualisiert — Stand {t}",
     imported: "{n} Zeilen in {s} Tab(s) importiert ({f})",
-    fltEmpty: "(leer)",
-    compactCols: "Nur Spalten mit Warnungen",
     tabRows: "{n} Zeilen", tabOverview: "Übersicht", tabCalendar: "Kalender",
     importErr: "Datei konnte nicht gelesen werden: {e}",
     importEmpty: "Keine Datenzeilen in der Datei gefunden.",
@@ -471,7 +449,7 @@ const I18N = {
     clearType: "Zur Bestätigung LÖSCHEN eintippen:", clearWord: "LÖSCHEN",
     clearBtn: "Endgültig löschen", cleared: "Alle Daten gelöscht.",
     cancel: "Abbrechen", save: "Speichern", close: "Schließen", apply: "Übernehmen",
-    licCol: "Spalte", person: "Person",
+    licCol: "Spalte",
     btnExport: "Exportieren",
     expTitle: "Liste exportieren",
     expHint: "Tab „{s}“ · Suche/Filter werden angewendet · {n} Zeile(n).",
@@ -480,9 +458,9 @@ const I18N = {
     expCsv: "CSV (Semikolon)", expCsvSub: "Alle Spalten inkl. Status, für Excel/Import",
     expDone: "Export erstellt: {f}", expNoRows: "Keine Zeilen im aktuellen Filter.",
     pdfTitle: "Lizenz-Ablauf-Report", pdfLic: "Lizenz / Berechtigung", pdfDate: "Ablaufdatum",
-    pdfDays: "Hinweis", pdfPage: "Seite {a} von {b}",
     pdfSummary: "Abgelaufen: {e} · Kritisch: {c} · Warnung: {w} · Gültig: {o}",
     pdfNoWarn: "Keine Warnungen im aktuellen Filter — alle Lizenzen gültig.",
+    pdfLibErr: "PDF-Bibliothek konnte nicht geladen werden.",
     delRow: "Person löschen",
     delTitle: "Person löschen?",
     delBody: "„{n}“ wird aus dem Tab „{s}“ entfernt und erscheint nicht mehr im Dashboard. Direkt danach ist „Rückgängig“ möglich.",
@@ -500,7 +478,6 @@ const I18N = {
     mailHint: "Der Report steht als Text im E-Mail-Entwurf. Anhänge sind per mailto nicht möglich — für die vollständige Liste bitte zusätzlich den PDF-/Excel-Export anhängen.",
     mailSubject: "Lizenz-Report {s} — Stand {d}",
     mailHead: "Lizenz-Ablauf-Report\nTab: {s}\nReferenzdatum: {d}\n{sum}\n",
-    mailTruncated: "… gekürzt ({n} weitere Einträge) — vollständige Liste siehe PDF-/Excel-Anhang.",
     refDate: "Referenzdatum (heute)",
     refDateSub: "Alle Ablauffristen werden gegen dieses tagesaktuelle Datum berechnet.",
     activeOnly: "Nur Aktive",
@@ -559,23 +536,24 @@ const I18N = {
     appTitle: "Instructor Overview – Dashboard",
     appSub: "License & qualification monitoring · expiry dates at a glance",
     reloadTitle: "Reload the page?",
-    reloadBody: "Reloading discards the loaded data (nothing is stored). Please upload the current Excel list again afterwards.",
+    reloadBody: "Reloading discards the loaded data (local storage is off). Please upload the current Excel list again afterwards.",
+    reloadBodyStored: "The page will reload. Local storage is ACTIVE — the last loaded list is kept in this browser and will be restored afterwards.",
     reloadBtn: "Reload",
     updNote: "Update installed — the app is now running version {v}.",
     calTitle: "Calendar — expired & critical",
-    calToday: "Today", calPrev: "Previous month", calNext: "Next month",
+    calToday: "Today",
     calBack: "Back", calFwd: "Forward",
     calMonthView: "Month", calWeekView: "Week", calAgendaView: "Agenda",
     calAgendaTitle: "All entries (chronological)", calAgendaEmpty: "No upcoming entries.",
     calIcs: "Export to your own calendar (.ics)",
     calDayEntries: "Licenses due on {d}",
     personDetails: "Personal Details",
-    btnUpload: "Upload Excel", btnRefresh: "Refresh",
+    btnUpload: "Upload Excel",
     btnBackupDown: "Download backup (JSON)", btnBackupUp: "Load backup",
-    btnColumns: "Columns", btnSettings: "Settings", btnPrint: "Print / PDF",
+    btnColumns: "Columns", btnSettings: "Settings",
     btnClear: "Clear data",
     setBackupH: "Backup",
-    setBackupHint: "Save the current state as a JSON file, or restore a backup. Only the currently loaded list is written to the file — nothing is stored permanently.",
+    setBackupHint: "Save the current state as a JSON file, or restore a backup. Only the currently loaded list is written to the downloaded file (the app does not store it itself). To keep data in the browser, see \"Local storage\" above.",
     dzTitle: "Drop your Excel file here",
     dzText: "or pick it via the button (.xlsx, .xls, .csv). Header row, name and date columns are detected automatically.",
     dzHint: "Alternatively restore a previous JSON backup.",
@@ -588,18 +566,16 @@ const I18N = {
     warnMore: "… {n} more entries (use search/filters or print for the full list).",
     daysAgo: "expired {d} days ago", daysToday: "expires today", daysIn: "expires in {d} days",
     tblTitle: "All records",
-    search: "Search…", searchPh: "Search: name, CPC valid until, CPC TKI valid until, Pilot Lic.Nr. …", fltAll: "All",
+    searchPh: "Search: name, CPC valid until, CPC TKI valid until, Pilot Lic.Nr. …",
     stExpired: "Expired", stCritical: "Critical", stWarning: "Warning", stOk: "Valid", stNone: "No date",
     stInvalid: "invalid date",
-    fltReset: "Reset filters", countOf: "{a} of {b} rows",
+    countOf: "{a} of {b} rows",
     colStatus: "Status", noRows: "No rows match search/filters.",
     footAsOf: "As of: {t}", footFile: "File: {f} · imported {t} · {n} rows",
     footNoFile: "No Excel file imported yet.",
     saveErr: "Settings could not be saved ⚠",
     refreshed: "View refreshed — as of {t}",
     imported: "{n} rows imported across {s} tab(s) ({f})",
-    fltEmpty: "(empty)",
-    compactCols: "Warning columns only",
     tabRows: "{n} rows", tabOverview: "Overview", tabCalendar: "Calendar",
     importErr: "Could not read file: {e}",
     importEmpty: "No data rows found in the file.",
@@ -617,7 +593,7 @@ const I18N = {
     clearType: "Type DELETE to confirm:", clearWord: "DELETE",
     clearBtn: "Delete permanently", cleared: "All data deleted.",
     cancel: "Cancel", save: "Save", close: "Close", apply: "Apply",
-    licCol: "Column", person: "Person",
+    licCol: "Column",
     btnExport: "Export",
     expTitle: "Export list",
     expHint: "Tab “{s}” · search/filters apply · {n} row(s).",
@@ -626,9 +602,9 @@ const I18N = {
     expCsv: "CSV (semicolon)", expCsvSub: "All columns incl. status, for Excel/import",
     expDone: "Export created: {f}", expNoRows: "No rows in the current filter.",
     pdfTitle: "License Expiry Report", pdfLic: "License / qualification", pdfDate: "Expiry date",
-    pdfDays: "Note", pdfPage: "Page {a} of {b}",
     pdfSummary: "Expired: {e} · Critical: {c} · Warning: {w} · Valid: {o}",
     pdfNoWarn: "No alerts in the current filter — all licenses valid.",
+    pdfLibErr: "Could not load the PDF library.",
     delRow: "Delete person",
     delTitle: "Delete person?",
     delBody: "“{n}” will be removed from tab “{s}” and no longer appears in the dashboard. You can undo right afterwards.",
@@ -646,7 +622,6 @@ const I18N = {
     mailHint: "The report is placed as text in the email draft. Attachments are not possible via mailto — please also attach the PDF/Excel export for the complete list.",
     mailSubject: "License report {s} — as of {d}",
     mailHead: "License Expiry Report\nTab: {s}\nReference date: {d}\n{sum}\n",
-    mailTruncated: "… truncated ({n} more entries) — see attached PDF/Excel for the full list.",
     refDate: "Reference date (today)",
     refDateSub: "All expiry deadlines are calculated against this current date.",
     activeOnly: "Active only",
@@ -805,8 +780,8 @@ function sheet(){
 function defaultUI(){
   /* statuses: multi-select quick filter — defaults to "expired" so the most
      urgent entries are in focus right after upload; reset shows everything */
-  return { q:"", statuses:["expired"], colFilters:{}, sortKey:"__status", sortDir:1,
-           compact:false, activeOnly:false, hideLongExpired:false, tab:"dash",
+  return { q:"", statuses:["expired"], sortKey:"__status", sortDir:1,
+           activeOnly:false, hideLongExpired:false, tab:"dash",
            calView:"month", calAnchor:null };
 }
 function toggleStatus(st){
@@ -1492,7 +1467,9 @@ const PDF_ST_RGB = {
 /* Whole-list report — always ONE landscape page. Items are laid out in up to three
    columns with the row height/font scaled so everything fits on a single sheet. */
 function exportPDF(rows, statusSet, suffix){
-  const doc = new window.jspdf.jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+  let doc;
+  try { doc = new window.jspdf.jsPDF({ orientation: "landscape", unit: "mm", format: "a4" }); }
+  catch(e){ console.error(e); toast(t("pdfLibErr"), "err"); return; }
   const W = 297, H = 210, M = 12;
   const wanted = (statusSet && statusSet.length) ? statusSet : ["expired", "critical", "warning"];
   const { items, perLic } = collectItems(rows, wanted);
@@ -1540,10 +1517,41 @@ function exportPDF(rows, statusSet, suffix){
   toast(t("expDone", {f: name}));
 }
 
+/* Personal-detail field patterns, in display order (Firstname, Surname, Pilot Lic, …) */
+const PERSON_FIELD_PATTERNS = [
+  /first\s*name|vorname/i, /surname|last\s*name|nachname/i, /pilot\s*lic/i,
+  /mail\s*aaa/i, /mail\s*priv/i, /telephone|telefon/i, /adresse|address/i, /home\s*base/i
+];
+/* Split a person's columns into ordered Personal-Detail fields and the remaining
+   "other" text fields (real dates belong to the licence list). Shared by the detail
+   view and the person PDF export so the two never drift apart. */
+function gatherPersonFields(sh, row){
+  const nameKeySet = new Set(nameColKeys());
+  const usedKeys = new Set();
+  const personal = [];
+  for (const re of PERSON_FIELD_PATTERNS){
+    const col = sh.columns.find(c => c.type === "text" && re.test(c.label) && !usedKeys.has(c.key));
+    if (!col) continue;
+    usedKeys.add(col.key);
+    personal.push({ label: col.label, value: String(row.c[col.key] || "—") });
+  }
+  const other = [];
+  for (const c of sh.columns){
+    if (nameKeySet.has(c.key) || usedKeys.has(c.key)) continue;
+    const v = row.c[c.key];
+    if (!v) continue;
+    if (c.type === "date" && parseDateString(v)) continue;
+    other.push({ col: c, value: String(v) });
+  }
+  return { personal, other };
+}
+
 /* Single-person report — Personal Details first, then the licence/date list, then
    any remaining details. Portrait, reads like a data sheet. */
 function exportPersonPDF(row, idx){
-  const doc = new window.jspdf.jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  let doc;
+  try { doc = new window.jspdf.jsPDF({ orientation: "portrait", unit: "mm", format: "a4" }); }
+  catch(e){ console.error(e); toast(t("pdfLibErr"), "err"); return; }
   const W = 210, H = 297, M = 16;
   const sh = sheet();
   const name = rowName(row, idx);
@@ -1577,32 +1585,11 @@ function exportPersonPDF(row, idx){
     }
   };
 
-  /* gather personal fields in a fixed order (mirrors the detail view) */
-  const nameKeySet = new Set(nameColKeys());
-  const usedKeys = new Set();
-  const personal = [];
-  const PERSONAL_PATTERNS = [
-    /first\s*name|vorname/i, /surname|last\s*name|nachname/i, /pilot\s*lic/i,
-    /mail\s*aaa/i, /mail\s*priv/i, /telephone|telefon/i, /adresse|address/i, /home\s*base/i
-  ];
-  for (const re of PERSONAL_PATTERNS){
-    const col = sh.columns.find(c => c.type === "text" && re.test(c.label) && !usedKeys.has(c.key));
-    if (!col) continue;
-    usedKeys.add(col.key);
-    personal.push([col.label, String(row.c[col.key] || "—")]);
-  }
-  const other = [];
-  for (const c of sh.columns){
-    if (nameKeySet.has(c.key) || usedKeys.has(c.key)) continue;
-    const v = row.c[c.key];
-    if (!v) continue;
-    if (c.type === "date" && parseDateString(v)) continue;   // real dates belong to the licence list
-    other.push([c.label, String(v)]);
-  }
+  const { personal, other } = gatherPersonFields(sh, row);
 
   /* 1) Personal Details first */
   sectionTitle(t("personDetails"));
-  if (personal.length) kvRows(personal);
+  if (personal.length) kvRows(personal.map(f => [f.label, f.value]));
   else { doc.setFontSize(10); doc.text("—", M, y); y += 6; }
 
   /* 2) Licences & expiry dates */
@@ -1632,7 +1619,7 @@ function exportPersonPDF(row, idx){
   }
 
   /* 3) Remaining details */
-  if (other.length){ y += 4; sectionTitle(t("personOther")); kvRows(other); }
+  if (other.length){ y += 4; sectionTitle(t("personOther")); kvRows(other.map(f => [f.col.label, f.value])); }
 
   doc.setFontSize(8); doc.setTextColor(120, 130, 145);
   doc.text(COPYRIGHT + "  ·  Version " + APP_VERSION, M, H - 10);
@@ -1755,31 +1742,22 @@ function mailItems(statusSet, rowsOverride){
 function mailLine(it){
   return "- [" + stLabel(it.status) + "] " + fmtDate(it.iso) + " | " + it.name + " | " + it.lic + " (" + daysText(it.days) + ")";
 }
-function mailText(statusSet, maxChars, rowsOverride){
+function mailText(statusSet, rowsOverride){
   const { items, perLic } = mailItems(statusSet, rowsOverride);
   let text = t("mailHead", {
     s: sheet().name, d: fmtTodayLong(),
     sum: t("pdfSummary", {e: perLic.expired, c: perLic.critical, w: perLic.warning, o: perLic.ok})
   }) + "\n";
-  let used = 0;
-  for (let i = 0; i < items.length; i++){
-    const line = mailLine(items[i]) + "\n";
-    if (maxChars && text.length + line.length > maxChars){
-      text += t("mailTruncated", {n: items.length - used}) + "\n";
-      break;
-    }
-    text += line;
-    used++;
-  }
+  for (const it of items) text += mailLine(it) + "\n";   // the COMPLETE selected list — no truncation
   if (!items.length) text += t("pdfNoWarn") + "\n";
   text += "\n" + COPYRIGHT + " · Version " + APP_VERSION + "\n";
   return text;
 }
 function buildMailto(to, statusSet, rowsOverride){
   const subject = t("mailSubject", {s: sheet().name, d: fmtTodayLong()});
-  /* put the COMPLETE selected list into the draft (no truncation); some mail clients
-     have their own mailto length limits, in which case the Copy button is the fallback */
-  const body = mailText(statusSet, 0, rowsOverride);
+  /* the whole selected list goes into the draft; some mail clients impose their own
+     mailto length limit, in which case the Copy button is the fallback */
+  const body = mailText(statusSet, rowsOverride);
   /* RFC 6068: multiple addresses are comma-separated and must not have their
      separators percent-encoded — encode each address individually */
   const addrs = String(to || "").split(/[;,]/).map(a => a.trim()).filter(Boolean)
@@ -1848,7 +1826,7 @@ function openMail(){
         const set = readSet();
         if (!set.length){ toast(t("expNoRows"), "warn"); return; }
         remember();
-        copyToClipboard(mailText(set, 0)).then(okCopy => {
+        copyToClipboard(mailText(set)).then(okCopy => {
           toast(okCopy ? t("mailCopied") : t("backupErr", {e: "clipboard"}), okCopy ? "" : "err");
         });
       });
@@ -1951,13 +1929,6 @@ function filteredRows(statusOverride){
     const { ev, drop } = applyHideLongExpired(evalRow(row), cutoff, ui.hideLongExpired);
     if (drop) return;                                  // every expiry is > 6 months old → hide the person
     if (statuses.length && !statuses.includes(ev.worst)) return;
-    for (const k in ui.colFilters){
-      const want = ui.colFilters[k];
-      if (!want) continue;
-      const val = String(row.c[k] || "");
-      if (want === "__empty__"){ if (val !== "") return; }
-      else if (val !== want) return;
-    }
     if (q){
       let hit = false;
       for (const c of sheet().columns){
@@ -2021,7 +1992,6 @@ function render(){
   const counts = { expired: 0, critical: 0, warning: 0, ok: 0, none: 0 };
   const perLic = { expired: 0, critical: 0, warning: 0, ok: 0 };
   const warnings = [];
-  const warnColKeys = new Set();
   const aKey = aktivColKey();
   const cutoff6 = longExpiredCutoffISO();
   let longExpiredCount = 0;                            // date entries older than 6 months (for the toggle badge)
@@ -2040,7 +2010,6 @@ function render(){
       totalLic++;
       perLic[it.status]++;
       if (it.status !== "ok"){
-        warnColKeys.add(it.col.key);
         warnings.push({ name: rowName(row, idx), col: it.col.label, iso: it.iso, days: it.days, status: it.status });
       }
     }
@@ -2052,16 +2021,7 @@ function render(){
   const WARN_CAP = 300;
   const shownWarnings = visWarnings.slice(0, WARN_CAP);
 
-  /* compact mode: name/flag columns + only date columns that carry a warning */
-  const nameKeys = new Set(nameColKeys());
-  let visCols = sh.columns;
-  if (ui.compact){
-    visCols = sh.columns.filter(c =>
-      nameKeys.has(c.key) ||
-      c.key === aKey ||                                   // same Aktiv detection as the toggle
-      (c.type === "date" && warnColKeys.has(c.key)));
-    if (!visCols.length) visCols = sh.columns;
-  }
+  const visCols = sh.columns;
 
   let html = "";
   /* sheet tabs */
@@ -2508,9 +2468,7 @@ function wireDashboard(){
       const i = parseInt(tab.getAttribute("data-sheet"), 10);
       if (!isFinite(i) || i === state.active || !state.sheets[i]) return;
       state.active = i;
-      const keepCompact = ui.compact;
       ui = defaultUI();
-      ui.compact = keepCompact;
       saveState();
       render();
     });
@@ -2571,23 +2529,12 @@ function openPerson(idx){
   const row = sh.rows[idx];
   if (!row) return;
   const ev = evalRow(row);
-  const nameKeySet = new Set(nameColKeys());
   const items = ev.items.filter(i => i.iso).sort((a, b) => a.iso < b.iso ? -1 : 1);
 
-  /* Personal Details first, in a fixed order (missing fields show a dash) */
-  const PERSONAL_PATTERNS = [
-    /first\s*name|vorname/i, /surname|last\s*name|nachname/i, /pilot\s*lic/i,
-    /mail\s*aaa/i, /mail\s*priv/i, /telephone|telefon/i, /adresse|address/i, /home\s*base/i
-  ];
-  const usedKeys = new Set();
-  let personal = "";
-  for (const re of PERSONAL_PATTERNS){
-    /* text columns only — a date column like "Pilot Lic valid until" belongs to the license list */
-    const col = sh.columns.find(c => c.type === "text" && re.test(c.label) && !usedKeys.has(c.key));
-    if (!col) continue;
-    usedKeys.add(col.key);
-    personal += "<div><b>" + esc(col.label) + ":</b>" + esc(row.c[col.key] || "—") + "</div>";
-  }
+  /* Personal Details first (fixed order, shared with the PDF export; missing fields show a dash) */
+  const { personal: personalFields, other: otherFields } = gatherPersonFields(sh, row);
+  const personal = personalFields.map(f =>
+    "<div><b>" + esc(f.label) + ":</b>" + esc(f.value) + "</div>").join("");
 
   let body = "<p>" + chip(ev.worst) + "</p>" +
     (personal ? "<h4>" + esc(t("personDetails")) + '</h4><div class="pd-other">' + personal + "</div>" : "") +
@@ -2604,13 +2551,10 @@ function openPerson(idx){
     }
     body += "</ul>";
   }
-  /* non-date details + unparseable values in date columns (invalid dates flagged here too) */
+  /* remaining non-date details — unparseable values in date columns get an "invalid" flag */
   let other = "";
-  for (const c of sh.columns){
-    if (nameKeySet.has(c.key) || usedKeys.has(c.key)) continue;
-    const v = row.c[c.key];
-    if (!v) continue;
-    if (c.type === "date" && parseDateString(v)) continue;
+  for (const f of otherFields){
+    const c = f.col, v = f.value;
     const invalid = c.type === "date" && isDateLike(v)
       ? ' <span class="chip none">⚠ ' + esc(t("stInvalid")) + "</span>" : "";
     other += "<div><b>" + esc(c.label) + ":</b>" + esc(v) + invalid + "</div>";
@@ -3018,7 +2962,7 @@ document.getElementById("btnReload").addEventListener("click", () => {
   if (!state.sheets.length){ location.reload(); return; }
   openModal({
     title: t("reloadTitle"),
-    bodyHTML: "<p>" + esc(t("reloadBody")) + "</p>",
+    bodyHTML: "<p>" + esc(t(state.settings.persistData ? "reloadBodyStored" : "reloadBody")) + "</p>",
     buttons: [
       { label: t("cancel"), kind: "ghost", onClick: () => true },
       { label: "↻ " + t("reloadBtn"), onClick: () => { location.reload(); return true; } }
