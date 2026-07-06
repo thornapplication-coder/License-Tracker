@@ -770,7 +770,7 @@ function collectItems(rows, wanted){
 }
 
 /* ---------- state ---------- */
-const APP_VERSION = "1.2.1";
+const APP_VERSION = "1.2.2";
 const COPYRIGHT = "© Copyright by Patrick Thorn";
 const DEFAULT_MAILTO = "Pilotadmin@aviationacademy.at; Claudia.lautner@aviationacademy.at; " +
   "Patrick.thorn@aviationacademy.at; Christian.terler@aviationacademy.at";
@@ -1936,8 +1936,10 @@ function applyStaticI18n(){
   setSaveBadge();
 }
 
-function filteredRows(statusOverride){
-  const q = ui.q.trim().toLowerCase();
+function filteredRows(statusOverride, ignoreSearch){
+  /* ignoreSearch: the calendar shows all upcoming/expired entries and must not be
+     narrowed by the table's text search (which lives on the overview tab) */
+  const q = ignoreSearch ? "" : ui.q.trim().toLowerCase();
   const statuses = statusOverride !== undefined ? statusOverride : ui.statuses;
   const aKey = ui.activeOnly ? aktivColKey() : null;
   const cutoff = longExpiredCutoffISO();
@@ -2229,7 +2231,7 @@ function render(){
 /* ---------- month calendar (expired & critical on their expiry dates) ---------- */
 function calItemsByDay(){
   const byDay = new Map();
-  for (const it of collectItems(filteredRows([]), ["expired", "critical"]).items){
+  for (const it of collectItems(filteredRows([], true), ["expired", "critical"]).items){
     if (!byDay.has(it.iso)) byDay.set(it.iso, []);
     byDay.get(it.iso).push(it);
   }
@@ -2525,7 +2527,7 @@ function wireDashboard(){
   }
   const calIcs = document.getElementById("calIcs");
   if (calIcs) calIcs.addEventListener("click", () => {
-    const rows = filteredRows([]);
+    const rows = filteredRows([], true);        // calendar export mirrors the calendar (search-independent)
     if (!rows.length){ toast(t("expNoRows"), "warn"); return; }
     exportICS(rows, ["expired", "critical"], "kalender");
   });
