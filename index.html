@@ -727,7 +727,15 @@ const FORCE_DATE_LABELS = new Set([
   "emb505 sfi", "emb505 tre/sfe", "emb505 tri", "emb505 rating ir",
   "first cpc", "cor"
 ]);
-function isForcedDateLabel(label){ return FORCE_DATE_LABELS.has(normLabel(label)); }
+/* date columns that carry a date (format preserved) but are NOT expiry dates — they
+   are shown everywhere yet never evaluated for status (Abgelaufen/Kritisch/…) */
+const NON_EXPIRY_DATE_LABELS = new Set([
+  "xls standardization", "self familiarization", "aaa refresher training"
+]);
+function isForcedDateLabel(label){ return FORCE_DATE_LABELS.has(normLabel(label)) || NON_EXPIRY_DATE_LABELS.has(normLabel(label)); }
+function isNonExpiryDateLabel(label){ return NON_EXPIRY_DATE_LABELS.has(normLabel(label)); }
+/* a real, monitored expiry column: a date column whose label is not on the non-expiry list */
+function isExpiryDateCol(c){ return c.type === "date" && !isNonExpiryDateLabel(c.label); }
 function locale(){ return state.settings.lang === "de" ? "de-DE" : "en-GB"; }
 /* Intl formatters are expensive to construct — cache per language */
 const fmtCache = {};
@@ -770,7 +778,7 @@ function collectItems(rows, wanted){
 }
 
 /* ---------- state ---------- */
-const APP_VERSION = "1.2.2";
+const APP_VERSION = "1.3.0";
 const COPYRIGHT = "© Copyright by Patrick Thorn";
 const DEFAULT_MAILTO = "Pilotadmin@aviationacademy.at; Claudia.lautner@aviationacademy.at; " +
   "Patrick.thorn@aviationacademy.at; Christian.terler@aviationacademy.at";
@@ -1064,6 +1072,7 @@ function evalRow(row){
   const items = [];
   let worst = "none";
   for (const col of dateCols()){
+    if (isNonExpiryDateLabel(col.label)) continue;   // date shown, but never monitored for expiry
     const iso = parseDateString(row.c[col.key]);
     if (!iso) {
       if (row.c[col.key]) items.push({ col, iso: null, days: null, status: "none" });
@@ -1433,9 +1442,12 @@ function exportXLSX(rows, suffix){
             const iso = parseDateString(v);
             if (iso){
               const p = iso.split("-");
-              const st = statusForDays(daysUntil(iso));
-              cell.value(new Date(Date.UTC(+p[0], +p[1]-1, +p[2])))
-                .style({ numberFormat: "dd.mm.yyyy", fill: XLSX_FILL[st] || XLSX_FILL.none, fontColor: XLSX_FONT[st] || XLSX_FONT.none });
+              cell.value(new Date(Date.UTC(+p[0], +p[1]-1, +p[2]))).style("numberFormat", "dd.mm.yyyy");
+              /* only monitored expiry columns get a traffic-light colour */
+              if (isExpiryDateCol(c)){
+                const st = statusForDays(daysUntil(iso));
+                cell.style({ fill: XLSX_FILL[st] || XLSX_FILL.none, fontColor: XLSX_FONT[st] || XLSX_FONT.none });
+              }
               return;
             }
           }
@@ -1558,8 +1570,10 @@ function gatherPersonFields(sh, row){
     if (nameKeySet.has(c.key) || usedKeys.has(c.key)) continue;
     const v = row.c[c.key];
     if (!v) continue;
-    if (c.type === "date" && parseDateString(v)) continue;
-    other.push({ col: c, value: String(v) });
+    const iso = c.type === "date" ? parseDateString(v) : null;
+    if (iso && isExpiryDateCol(c)) continue;                 // monitored expiry dates go to the licence list
+    /* non-expiry date columns keep their date format; unparseable date-likes are flagged */
+    other.push({ col: c, value: iso ? fmtDate(iso) : String(v), invalid: c.type === "date" && !iso && isDateLike(v) });
   }
   return { personal, other };
 }
@@ -2200,7 +2214,10 @@ function render(){
         }
         if (c.type === "date"){
           const iso = parseDateString(v);
-          if (iso){
+          if (iso && isNonExpiryDateLabel(c.label)){
+            /* informational date — keep the format, but no status chip / no monitoring */
+            html += '<td class="date-cell' + hlc + '"' + dc + '><span class="d">' + esc(fmtDate(iso)) + "</span></td>";
+          } else if (iso){
             const st = statusForDays(daysUntil(iso));
             if (ui.hideLongExpired && st === "expired" && iso < cutoff6){
               /* long-expired entry hidden by the toggle — keep the cell but suppress the date */
@@ -2622,13 +2639,11 @@ function openPerson(idx){
     }
     body += "</ul>";
   }
-  /* remaining non-date details — unparseable values in date columns get an "invalid" flag */
+  /* remaining details (incl. non-expiry dates) — unparseable date-likes get an "invalid" flag */
   let other = "";
   for (const f of otherFields){
-    const c = f.col, v = f.value;
-    const invalid = c.type === "date" && isDateLike(v)
-      ? ' <span class="chip none">⚠ ' + esc(t("stInvalid")) + "</span>" : "";
-    other += "<div><b>" + esc(c.label) + ":</b>" + esc(v) + invalid + "</div>";
+    const invalid = f.invalid ? ' <span class="chip none">⚠ ' + esc(t("stInvalid")) + "</span>" : "";
+    other += "<div><b>" + esc(f.col.label) + ":</b>" + esc(f.value) + invalid + "</div>";
   }
   if (other) body += "<h4>" + esc(t("personOther")) + '</h4><div class="pd-other">' + other + "</div>";
 
