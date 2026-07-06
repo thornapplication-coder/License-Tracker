@@ -439,7 +439,7 @@ const I18N = {
     daysAgo: "vor {d} Tagen abgelaufen", daysToday: "läuft heute ab", daysIn: "läuft in {d} Tagen ab",
     tblTitle: "Alle Datensätze",
     searchShort: "Suchen …", searchFieldLbl: "Suchfeld", searchFieldAll: "Alle Felder", searchName: "Name",
-    highlightBtn: "Spalten hervorheben",
+    highlightBtn: "Spalten hervorheben", searchAllStatus: "· über alle Status",
     stExpired: "Abgelaufen", stCritical: "Kritisch", stWarning: "Warnung", stOk: "Gültig", stNone: "Kein Datum",
     stInvalid: "Datum ungültig",
     countOf: "{a} von {b} Zeilen",
@@ -584,7 +584,7 @@ const I18N = {
     daysAgo: "expired {d} days ago", daysToday: "expires today", daysIn: "expires in {d} days",
     tblTitle: "All records",
     searchShort: "Search …", searchFieldLbl: "Search field", searchFieldAll: "All fields", searchName: "Name",
-    highlightBtn: "Highlight columns",
+    highlightBtn: "Highlight columns", searchAllStatus: "· across all statuses",
     stExpired: "Expired", stCritical: "Critical", stWarning: "Warning", stOk: "Valid", stNone: "No date",
     stInvalid: "invalid date",
     countOf: "{a} of {b} rows",
@@ -770,7 +770,7 @@ function collectItems(rows, wanted){
 }
 
 /* ---------- state ---------- */
-const APP_VERSION = "1.2.0";
+const APP_VERSION = "1.2.1";
 const COPYRIGHT = "© Copyright by Patrick Thorn";
 const DEFAULT_MAILTO = "Pilotadmin@aviationacademy.at; Claudia.lautner@aviationacademy.at; " +
   "Patrick.thorn@aviationacademy.at; Christian.terler@aviationacademy.at";
@@ -1947,15 +1947,25 @@ function filteredRows(statusOverride){
   const searchCols = field === "__name__" ? sheet().columns.filter(c => nameSet.has(c.key))
                    : field ? sheet().columns.filter(c => c.key === field)
                    : sheet().columns;
+  /* an active search overrides the status quick-filter (main table only), so a person
+     can be found by name even when nothing of theirs is expired/critical/etc. */
+  const searchActive = statusOverride === undefined && !!q;
+  const qTokens = q.split(/\s+/).filter(Boolean);
   const out = [];
   sheet().rows.forEach((row, idx) => {
     if (ui.activeOnly && !isActiveRow(row, aKey)) return;
     const { ev, drop } = applyHideLongExpired(evalRow(row), cutoff, ui.hideLongExpired);
     if (drop) return;                                  // every expiry is > 6 months old → hide the person
-    if (statuses.length && !statuses.includes(ev.worst)) return;
+    if (statuses.length && !searchActive && !statuses.includes(ev.worst)) return;
     if (q){
       let hit = false;
-      for (const c of searchCols){
+      /* combined "Firstname Surname" match, any word order — for the name / all-fields scope */
+      if (field === "" || field === "__name__"){
+        const nameStr = rowName(row, idx).toLowerCase();
+        if (qTokens.length && qTokens.every(tok => nameStr.includes(tok))) hit = true;
+      }
+      for (let i = 0; !hit && i < searchCols.length; i++){
+        const c = searchCols[i];
         const v = row.c[c.key];
         if (!v) continue;
         if (String(v).toLowerCase().includes(q)){ hit = true; break; }
@@ -2160,7 +2170,8 @@ function render(){
           (ui.highlightCols[c.key] ? " checked" : "") + "> " + esc(c.label) + "</label>").join("") +
       "</div>" +
     "</details>" +
-    '<span class="tbl-count">' + esc(t("countOf", {a: rows.length, b: personCount})) + "</span>" +
+    '<span class="tbl-count">' + esc(t("countOf", {a: rows.length, b: personCount})) +
+      (ui.q.trim() && ui.statuses.length ? " " + esc(t("searchAllStatus")) : "") + "</span>" +
     "</div>";
   html += '<div class="table-wrap"><table class="data" id="dataTable"><thead><tr>';
   html += '<th class="delcell stick" scope="col" style="left:0"><span class="sr-only">' + esc(t("delRow")) + "</span></th>";
