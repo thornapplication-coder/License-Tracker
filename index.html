@@ -284,7 +284,6 @@
   .chip.ok      {background:var(--st-ok-bg);     color:var(--st-ok-text);     border-color:var(--st-ok)}
   .chip.none    {background:var(--st-none-bg);   color:var(--st-none-text);   border-color:var(--st-none)}
 
-  /* ---- filters ---- */
 
   /* ---- table ---- */
   .table-wrap{overflow:auto;max-height:70vh}
@@ -370,7 +369,7 @@
   </div>
 </header>
 
-<div class="toolbar" id="toolbar">
+<div class="toolbar">
   <button class="btn" id="btnUpload" type="button">📄 <span data-i18n="btnUpload">Excel hochladen</span></button>
   <input type="file" id="fileInput" accept=".xlsx,.xls,.xlsm,.xlsb,.csv" class="sr-only">
   <input type="file" id="backupInput" accept=".json,application/json" class="sr-only">
@@ -546,7 +545,7 @@ const I18N = {
     expWhich: "Welche Status exportieren?",
     expCount: "{n} Zeile(n) im Export.",
     langSwitched: "Sprache auf Deutsch umgestellt.",
-    printHint: "Bitte zuerst Daten importieren.",
+    noDataHint: "Bitte zuerst Daten importieren.",
     noNameCol: "(Zeile {i})"
   },
   en: {
@@ -691,7 +690,7 @@ const I18N = {
     expWhich: "Which statuses to export?",
     expCount: "{n} row(s) in the export.",
     langSwitched: "Language switched to English.",
-    printHint: "Please import data first.",
+    noDataHint: "Please import data first.",
     noNameCol: "(row {i})"
   }
 };
@@ -778,12 +777,12 @@ function collectItems(rows, wanted){
 }
 
 /* ---------- state ---------- */
-const APP_VERSION = "1.3.0";
+const APP_VERSION = "1.3.1";
 const COPYRIGHT = "© Copyright by Patrick Thorn";
 const DEFAULT_MAILTO = "Pilotadmin@aviationacademy.at; Claudia.lautner@aviationacademy.at; " +
   "Patrick.thorn@aviationacademy.at; Christian.terler@aviationacademy.at";
-/* Pure converter: license DATA is never stored — only user settings persist.
-   Every session starts empty; the current Excel list must be uploaded fresh. */
+/* Settings always persist. License DATA is persisted ONLY when the user opts in
+   via settings.persistData (default off) — otherwise every session starts empty. */
 const LS_SETTINGS_KEY = "ew-ilc-settings-v1";
 const LS_DATA_KEY = "ew-ilc-data-v1";                         // only written when persistData is opted in
 const LS_LEGACY_KEY = "ew-instructor-license-dashboard-v1";   // old full-state key: wiped on boot
@@ -1716,7 +1715,7 @@ function exportICS(rows, statusSet, suffix){
   toast(t("expDone", {f: name}));
 }
 function openExport(){
-  if (!state.sheets.length){ toast(t("printHint"), "warn"); return; }
+  if (!state.sheets.length){ toast(t("noDataHint"), "warn"); return; }
   const opt = (id, ic, tt, ss) =>
     '<button type="button" class="exp-btn" id="' + id + '"><span class="ic">' + ic + "</span>" +
     "<span><span class='tt'>" + esc(tt) + "</span><div class='ss'>" + esc(ss) + "</div></span></button>";
@@ -1816,7 +1815,7 @@ function legacyCopy(text){
   return done;
 }
 function openMail(){
-  if (!state.sheets.length){ toast(t("printHint"), "warn"); return; }
+  if (!state.sheets.length){ toast(t("noDataHint"), "warn"); return; }
   const preset = ui.statuses.length ? ui.statuses : ["expired", "critical", "warning"];
   const checks = ["expired", "critical", "warning", "ok"].map(st =>
     '<label><input type="checkbox" data-mailst="' + st + '"' + (preset.includes(st) ? " checked" : "") + ">" +
@@ -2087,7 +2086,7 @@ function render(){
   }
 
   /* reference date — always derived live from the system clock */
-  html += '<div class="refdate" id="refdate">📅 <span class="rd-label">' + esc(t("refDate")) + ":</span>" +
+  html += '<div class="refdate">📅 <span class="rd-label">' + esc(t("refDate")) + ":</span>" +
     '<span class="rd-date">' + esc(fmtTodayLong()) + "</span>" +
     '<span class="rd-sub">' + esc(t("refDateSub")) + "</span></div>";
 
@@ -2707,7 +2706,7 @@ function dataQualityIssues(){
   return issues;
 }
 function openQuality(){
-  if (!state.sheets.length){ toast(t("printHint"), "warn"); return; }
+  if (!state.sheets.length){ toast(t("noDataHint"), "warn"); return; }
   const issues = dataQualityIssues();
   const groups = [
     ["invalid", t("dqInvalid")],
@@ -2828,7 +2827,7 @@ function handleCompareFile(file){
   reader.readAsArrayBuffer(file);
 }
 function openCompare(){
-  if (!state.sheets.length){ toast(t("printHint"), "warn"); return; }
+  if (!state.sheets.length){ toast(t("noDataHint"), "warn"); return; }
   openModal({
     title: t("cmpTitle"),
     bodyHTML: "<p>" + esc(t("cmpBody")) + "</p>",
@@ -2946,7 +2945,7 @@ function openSettings(){
   });
 }
 function openColumns(){
-  if (!sheet().columns.length){ toast(t("printHint"), "warn"); return; }
+  if (!sheet().columns.length){ toast(t("noDataHint"), "warn"); return; }
   let body = "<p><strong>" + esc(sheet().name) + "</strong></p><p>" + esc(t("colHint")) + "</p>";
   for (const c of sheet().columns){
     body += '<div class="col-row"><span class="cl">' + esc(c.label) + "</span>" +
