@@ -777,7 +777,7 @@ function collectItems(rows, wanted){
 }
 
 /* ---------- state ---------- */
-const APP_VERSION = "1.3.1";
+const APP_VERSION = "1.3.2";
 const COPYRIGHT = "© Copyright by Patrick Thorn";
 const DEFAULT_MAILTO = "Pilotadmin@aviationacademy.at; Claudia.lautner@aviationacademy.at; " +
   "Patrick.thorn@aviationacademy.at; Christian.terler@aviationacademy.at";
@@ -803,10 +803,11 @@ function sheet(){
   return state.sheets[state.active] || { name: "", columns: [], rows: [] };
 }
 function defaultUI(){
-  /* statuses: multi-select quick filter — defaults to "expired" so the most
-     urgent entries are in focus right after upload; reset shows everything */
-  return { q:"", searchField:"", statuses:["expired"], sortKey:"__status", sortDir:1,
-           activeOnly:false, hideLongExpired:false, tab:"dash",
+  /* statuses: multi-select quick filter — defaults to the actionable alert set
+     (expired + critical + warning) and hides long-expired entries, so every list
+     opens focused on what needs attention; a chip click narrows/widens from there */
+  return { q:"", searchField:"", statuses:["expired", "critical", "warning"], sortKey:"__status", sortDir:1,
+           activeOnly:false, hideLongExpired:true, tab:"dash",
            highlightCols:{}, calView:"month", calAnchor:null };
 }
 function toggleStatus(st){
